@@ -213,7 +213,10 @@ export const fetchCategoriesApi = async (): Promise<Category[]> => {
   try {
     const res = await api.get('/categories');
     if (res.data?.success && Array.isArray(res.data.data)) {
-      return [{ id: 'cat-00', name: 'All Items', slug: 'all-items' }, ...res.data.data];
+      const dynamicCats = res.data.data.filter(
+        (c: Category) => c.slug !== 'all-items' && c.name.toLowerCase() !== 'all items'
+      );
+      return [{ id: 'cat-00', name: 'All Items', slug: 'all-items' }, ...dynamicCats];
     }
     return fallbackCategories;
   } catch {

@@ -176,11 +176,11 @@ export const initialCategories = [
   { id: 'cat-04', name: 'Electrical Tools', slug: 'electrical-tools', description: 'Precision industrial multimeters, drills, and hardware' },
 ];
 
-let memoryProducts = [...initialProducts];
-let memoryCategories = [...initialCategories];
-let memoryOrders: any[] = [];
-let memoryMessages: any[] = [];
-let memorySubscribers: any[] = [];
+export let memoryProducts = [...initialProducts];
+export let memoryCategories = [...initialCategories];
+export let memoryOrders: any[] = [];
+export let memoryMessages: any[] = [];
+export let memorySubscribers: any[] = [];
 
 // Helper to check if DB is accessible
 export const checkDbConnection = async (): Promise<boolean> => {
@@ -227,7 +227,11 @@ export const getProductsFromStore = async (options: ProductQueryOptions) => {
       orderBy,
       include: { category: true },
     });
-    return products;
+    return products.map((p: any) => ({
+      ...p,
+      categoryName: p.category?.name || 'Electronics',
+      categorySlug: p.category?.slug || 'electronics',
+    }));
   }
 
   // Memory fallback
@@ -271,10 +275,18 @@ export const getProductsFromStore = async (options: ProductQueryOptions) => {
 export const getProductByIdFromStore = async (id: string) => {
   const isDbLive = await checkDbConnection();
   if (isDbLive) {
-    return prisma.product.findUnique({
+    const prod = await prisma.product.findUnique({
       where: { id },
       include: { category: true },
     });
+    if (prod) {
+      return {
+        ...prod,
+        categoryName: (prod as any).category?.name || 'Electronics',
+        categorySlug: (prod as any).category?.slug || 'electronics',
+      };
+    }
+    return null;
   }
   return memoryProducts.find((p) => p.id === id || p.slug === id) || null;
 };
@@ -291,30 +303,109 @@ export const getCategoriesFromStore = async () => {
 
 export const createProductInStore = async (data: any) => {
   const isDbLive = await checkDbConnection();
+  const slug =
+    data.slug ||
+    data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Date.now().toString().slice(-4);
+  const price = Number(data.price);
+  const stock = Number(data.stock) || 0;
+  const featured = Boolean(data.featured);
+  const brand = data.brand || 'Sarhad';
+  const description = data.description || '';
+  const imageUrl =
+    data.imageUrl ||
+    'https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=800&auto=format&fit=crop&q=80';
+  const galleryUrls = data.galleryUrls || [imageUrl];
+
   if (isDbLive) {
-    return prisma.product.create({
-      data,
+    // 1. Resolve or auto-create category in PostgreSQL database
+    let category: any = null;
+    if (data.categoryId) {
+      category = await prisma.category.findFirst({
+        where: {
+          OR: [
+            { id: data.categoryId },
+            { slug: data.categoryId },
+            { name: { equals: data.categoryId, mode: 'insensitive' as const } },
+            ...(data.categoryName ? [{ name: { equals: data.categoryName, mode: 'insensitive' as const } }] : []),
+          ],
+        },
+      });
+    }
+
+    if (!category) {
+      if (data.categoryName || data.categoryId) {
+        const catName = data.categoryName || data.categoryId;
+        const catSlug = catName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+        category = await prisma.category.upsert({
+          where: { name: catName },
+          update: {},
+          create: {
+            name: catName,
+            slug: catSlug,
+            description: `Products under ${catName}`,
+          },
+        });
+      } else {
+        category = await prisma.category.findFirst();
+      }
+    }
+
+    if (!category) {
+      category = await prisma.category.create({
+        data: {
+          name: 'Smart Gadgets',
+          slug: 'smart-gadgets',
+        },
+      });
+    }
+
+    const created = await prisma.product.create({
+      data: {
+        name: data.name,
+        slug,
+        description,
+        price,
+        stock,
+        categoryId: category.id,
+        brand,
+        featured,
+        imageUrl,
+        galleryUrls,
+      },
       include: { category: true },
     });
+
+    const formatted: any = {
+      ...created,
+      categoryName: category.name,
+      categorySlug: category.slug,
+    };
+    memoryProducts.unshift(formatted);
+    return formatted;
   }
 
-  const category = memoryCategories.find((c) => c.id === data.categoryId) || memoryCategories[1];
+  // In-memory fallback
+  const category =
+    memoryCategories.find(
+      (c) => c.id === data.categoryId || c.name.toLowerCase() === (data.categoryName || '').toLowerCase()
+    ) || memoryCategories[1];
+
   const newProduct = {
     id: `prod-${Date.now()}`,
     name: data.name,
-    slug: data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-    description: data.description,
-    price: Number(data.price),
-    stock: Number(data.stock) || 0,
+    slug,
+    description,
+    price,
+    stock,
     categoryId: category.id,
     categoryName: category.name,
     categorySlug: category.slug,
-    imageUrl: data.imageUrl,
-    galleryUrls: data.galleryUrls || [data.imageUrl],
-    featured: Boolean(data.featured),
+    imageUrl,
+    galleryUrls,
+    featured,
     rating: 5.0,
     reviewsCount: 0,
-    brand: data.brand || 'Sarhad',
+    brand,
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -325,11 +416,39 @@ export const createProductInStore = async (data: any) => {
 export const updateProductInStore = async (id: string, data: any) => {
   const isDbLive = await checkDbConnection();
   if (isDbLive) {
-    return prisma.product.update({
+    const updateData: any = {};
+    if (data.name !== undefined) updateData.name = data.name;
+    if (data.description !== undefined) updateData.description = data.description;
+    if (data.price !== undefined) updateData.price = Number(data.price);
+    if (data.stock !== undefined) updateData.stock = Number(data.stock);
+    if (data.brand !== undefined) updateData.brand = data.brand;
+    if (data.featured !== undefined) updateData.featured = Boolean(data.featured);
+    if (data.imageUrl !== undefined) updateData.imageUrl = data.imageUrl;
+
+    if (data.categoryId) {
+      const cat = await prisma.category.findFirst({
+        where: {
+          OR: [
+            { id: data.categoryId },
+            { slug: data.categoryId },
+            { name: { equals: data.categoryId, mode: 'insensitive' as const } },
+            ...(data.categoryName ? [{ name: { equals: data.categoryName, mode: 'insensitive' as const } }] : []),
+          ],
+        },
+      });
+      if (cat) updateData.categoryId = cat.id;
+    }
+
+    const updated = await prisma.product.update({
       where: { id },
-      data,
+      data: updateData,
       include: { category: true },
     });
+    return {
+      ...updated,
+      categoryName: updated.category?.name || data.categoryName,
+      categorySlug: updated.category?.slug,
+    };
   }
 
   const index = memoryProducts.findIndex((p) => p.id === id);
@@ -354,6 +473,4 @@ export const deleteProductInStore = async (id: string) => {
   memoryProducts.splice(index, 1);
   return true;
 };
-
-export { memoryOrders, memoryMessages, memorySubscribers };
 
