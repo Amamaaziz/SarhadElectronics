@@ -187,17 +187,25 @@ export const ShopPage: React.FC = () => {
         </div>
       ) : products.length === 0 ? (
         <div className="text-center py-20 p-8 rounded-3xl bg-surface/20 border border-surface-border space-y-4">
-          <Search className="w-12 h-12 text-textMuted mx-auto opacity-40" />
-          <h3 className="text-xl font-bold font-['Space_Grotesk'] text-white">No products matched your query</h3>
+          <Search className="w-12 h-12 text-cyan-neon mx-auto opacity-60" />
+          <h3 className="text-xl font-bold font-['Space_Grotesk'] text-white">
+            {currentSearch || (currentCategory && currentCategory !== 'all-items')
+              ? 'No products matched your query'
+              : 'No products in catalog yet'}
+          </h3>
           <p className="text-sm text-textMuted max-w-md mx-auto">
-            Try adjusting your search terms or select another category from the filters above.
+            {currentSearch || (currentCategory && currentCategory !== 'all-items')
+              ? 'Try adjusting your search terms or select another category from the filters above.'
+              : 'Our store catalog is ready. New real inventory is being added via the Admin Panel.'}
           </p>
-          <button
-            onClick={clearFilters}
-            className="px-6 py-2.5 rounded-xl bg-cyan-neon text-navy-950 font-bold text-xs uppercase tracking-wider font-['Space_Grotesk']"
-          >
-            Reset Filters
-          </button>
+          {(currentSearch || (currentCategory && currentCategory !== 'all-items')) && (
+            <button
+              onClick={clearFilters}
+              className="px-6 py-2.5 rounded-xl bg-cyan-neon text-navy-950 font-bold text-xs uppercase tracking-wider font-['Space_Grotesk'] shadow-neon-cyan"
+            >
+              Reset Filters
+            </button>
+          )}
         </div>
       ) : (
         <div>

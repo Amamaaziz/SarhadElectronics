@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, Trash2, Pencil, Search, X, FolderPlus, Check } from 'lucide-react';
+import { Plus, Trash2, Pencil, Search, X, FolderPlus, Check, AlertCircle } from 'lucide-react';
 import {
   getAdminProducts,
   getAdminCategories,
@@ -27,6 +27,7 @@ export const ManageProductsPage: React.FC = () => {
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState(emptyForm);
@@ -37,8 +38,11 @@ export const ManageProductsPage: React.FC = () => {
   const [addingCategoryLoading, setAddingCategoryLoading] = useState(false);
   const [categorySuccessMsg, setCategorySuccessMsg] = useState('');
 
+  const [modalError, setModalError] = useState('');
+
   const loadData = async () => {
     try {
+      setLoading(true);
       const [prods, cats] = await Promise.all([
         getAdminProducts(),
         getAdminCategories(),
@@ -46,7 +50,9 @@ export const ManageProductsPage: React.FC = () => {
       setProducts(prods);
       setCategories(cats);
     } catch {
-      // Handled by api fallbacks
+      // Keep state
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -56,6 +62,7 @@ export const ManageProductsPage: React.FC = () => {
 
   const openAddModal = () => {
     setEditingId(null);
+    setModalError('');
     setFormData({
       ...emptyForm,
       categoryId: categories[0]?.id || 'cat-01',
@@ -68,6 +75,7 @@ export const ManageProductsPage: React.FC = () => {
 
   const openEditModal = (prod: AdminProduct) => {
     setEditingId(prod.id);
+    setModalError('');
     setFormData({
       name: prod.name,
       description: prod.description || '',
@@ -124,15 +132,16 @@ export const ManageProductsPage: React.FC = () => {
     if (!window.confirm('Are you sure you want to remove this product from the catalog?')) return;
     try {
       await deleteAdminProduct(id);
+      await loadData();
     } catch {
-      // fall through to local removal regardless
+      setProducts((prev) => prev.filter((p) => p.id !== id));
     }
-    setProducts((prev) => prev.filter((p) => p.id !== id));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
+    setModalError('');
 
     const activeCat = categories.find((c) => c.id === formData.categoryId);
 
@@ -146,37 +155,18 @@ export const ManageProductsPage: React.FC = () => {
     try {
       if (editingId) {
         await updateAdminProduct(editingId, payload);
-        setProducts((prev) =>
-          prev.map((p) => (p.id === editingId ? { ...p, ...payload, categoryName: activeCat?.name || p.categoryName } : p))
-        );
       } else {
         await createAdminProduct(payload);
-        loadData();
       }
+      await loadData();
       setIsModalOpen(false);
-    } catch {
-      // Offline fallback: apply the change locally
-      if (editingId) {
-        setProducts((prev) =>
-          prev.map((p) => (p.id === editingId ? { ...p, ...payload, categoryName: activeCat?.name || p.categoryName } : p))
-        );
-      } else {
-        const newProd: AdminProduct = {
-          id: `prod-${Date.now()}`,
-          name: formData.name,
-          description: formData.description,
-          price: Number(formData.price),
-          stock: Number(formData.stock),
-          categoryId: formData.categoryId,
-          categoryName: activeCat?.name || 'Smart Tech',
-          imageUrl: formData.imageUrl || 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=800&auto=format&fit=crop&q=80',
-          featured: formData.featured,
-          brand: formData.brand,
-          createdAt: new Date().toISOString(),
-        };
-        setProducts((prev) => [newProd, ...prev]);
-      }
-      setIsModalOpen(false);
+    } catch (err: any) {
+      console.error('Failed to save product:', err);
+      const msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        'Failed to save product to database. Please verify your admin session.';
+      setModalError(msg);
     } finally {
       setSubmitting(false);
     }
@@ -289,8 +279,15 @@ export const ManageProductsPage: React.FC = () => {
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="py-10 px-7 text-center text-muted">
-                    No products match your search.
+                  <td colSpan={6} className="py-12 px-7 text-center text-muted">
+                    {products.length === 0 ? (
+                      <div className="space-y-3">
+                        <p className="text-sm font-medium text-body">No products in catalog yet.</p>
+                        <p className="text-xs text-muted">Click the "+ Add Product" button above to add your first real product to the website.</p>
+                      </div>
+                    ) : (
+                      'No products match your search.'
+                    )}
                   </td>
                 </tr>
               )}
@@ -314,6 +311,13 @@ export const ManageProductsPage: React.FC = () => {
                 <X className="w-5 h-5" />
               </button>
             </div>
+
+            {modalError && (
+              <div className="p-3 rounded-lg bg-rose-50 border border-rose-100 text-rose-600 text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{modalError}</span>
+              </div>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

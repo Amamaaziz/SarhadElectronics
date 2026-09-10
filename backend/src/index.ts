@@ -17,7 +17,7 @@ const PORT = process.env.PORT || 5000;
 // Middleware configuration
 app.use(
   cors({
-    origin: '*', // Allows requests from Vite dev servers (5173, 5174, etc.)
+    origin: (origin, callback) => callback(null, true), // Allows requests from Vite dev servers (5173, 5174, etc.)
     credentials: true,
   })
 );
