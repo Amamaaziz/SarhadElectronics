@@ -291,37 +291,8 @@ export const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* Scrolling Brand Marquee */}
-      <BrandMarquee />
-
-      {/* Curated "New Arrivals" Grid with Stagger Reveals */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 relative">
-        {/* Right side ambient electric blue glow */}
-        <div className="absolute right-0 top-1/3 w-[500px] h-[500px] bg-gradient-to-l from-[#0B6CCF]/20 via-[#0B6CCF]/10 to-transparent rounded-full blur-[120px] pointer-events-none -z-10" />
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-50px' }}
-          className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8"
-        >
-          <div>
-            <div className="inline-flex items-center gap-1.5 text-xs font-semibold tracking-widest text-cyan-neon uppercase font-['Space_Grotesk'] mb-2">
-              <Sparkles className="w-3.5 h-3.5" /> Curated Catalog
-            </div>
-            <h2 className="text-2xl sm:text-4xl font-bold font-['Space_Grotesk'] text-white">
-              New Arrivals & Best Sellers
-            </h2>
-          </div>
-          <Link
-            to="/shop"
-            className="inline-flex items-center gap-2 text-sm font-semibold text-cyan-neon hover:text-white transition-colors group"
-          >
-            <span>Explore All Products</span>
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          </Link>
-        </motion.div>
-
+      {/* Scrolling Brand Marquee & New Arrivals Hero Section */}
+      <BrandMarquee>
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[...Array(4)].map((_, i) => (
@@ -354,7 +325,7 @@ export const HomePage: React.FC = () => {
             ))}
           </motion.div>
         )}
-      </section>
+      </BrandMarquee>
 
       {/* Promotional Banner */}
       <PromoBanner />
