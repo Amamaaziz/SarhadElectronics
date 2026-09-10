@@ -29,12 +29,19 @@ export interface AdminOrder {
   shippingAddress: string;
   shippingPhone?: string;
   paymentMethod: string;
+  user?: {
+    fullName?: string;
+    email?: string;
+  };
   orderItems?: {
     id: string;
     productId: string;
     quantity: number;
     priceAtPurchase: number;
-    product?: { name: string };
+    product?: {
+      name: string;
+      imageUrl?: string;
+    };
   }[];
   createdAt: string;
 }

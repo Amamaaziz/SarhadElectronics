@@ -9,164 +9,8 @@ export interface ProductQueryOptions {
   limit?: number;
 }
 
-// Initial rich seed products as defined in the PRD
-export const initialProducts = [
-  {
-    id: 'prod-01',
-    name: 'Aura Noise Cancelling Pro',
-    slug: 'aura-noise-cancelling-pro',
-    description: 'Flagship spatial audio wireless headphones featuring active hybrid noise cancellation, 40-hour battery life, and ultra-plush memory foam comfort.',
-    price: 249.99,
-    stock: 45,
-    categoryId: 'cat-01',
-    categoryName: 'Smart Gadgets',
-    categorySlug: 'smart-gadgets',
-    imageUrl: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&auto=format&fit=crop&q=80',
-    galleryUrls: [
-      'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1484704849700-f032a568e944?w=800&auto=format&fit=crop&q=80'
-    ],
-    featured: true,
-    rating: 4.9,
-    reviewsCount: 128,
-    brand: 'Bose',
-    createdAt: new Date('2026-01-15T10:00:00Z'),
-    updatedAt: new Date('2026-01-15T10:00:00Z'),
-  },
-  {
-    id: 'prod-02',
-    name: 'CyberPulse Neo Smartwatch X',
-    slug: 'cyberpulse-neo-smartwatch-x',
-    description: 'Futuristic aerospace titanium smartwatch with AMOLED display, ECG cardiac monitoring, 100+ fitness modes, and 14-day standby.',
-    price: 189.50,
-    stock: 30,
-    categoryId: 'cat-01',
-    categoryName: 'Smart Gadgets',
-    categorySlug: 'smart-gadgets',
-    imageUrl: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&auto=format&fit=crop&q=80',
-    galleryUrls: ['https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&auto=format&fit=crop&q=80'],
-    featured: true,
-    rating: 4.8,
-    reviewsCount: 94,
-    brand: 'Samsung',
-    createdAt: new Date('2026-01-20T10:00:00Z'),
-    updatedAt: new Date('2026-01-20T10:00:00Z'),
-  },
-  {
-    id: 'prod-03',
-    name: 'Lumix RGB Smart Ambient Hex Bar',
-    slug: 'lumix-rgb-smart-ambient-hex-bar',
-    description: 'Dynamic reactive lighting bars with 16 million colors, sound synchronization, and WiFi Alexa/Google Home voice integration.',
-    price: 89.00,
-    stock: 60,
-    categoryId: 'cat-02',
-    categoryName: 'Modern Lighting',
-    categorySlug: 'modern-lighting',
-    imageUrl: 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=800&auto=format&fit=crop&q=80',
-    galleryUrls: ['https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=800&auto=format&fit=crop&q=80'],
-    featured: true,
-    rating: 4.7,
-    reviewsCount: 76,
-    brand: 'Philips',
-    createdAt: new Date('2026-02-01T10:00:00Z'),
-    updatedAt: new Date('2026-02-01T10:00:00Z'),
-  },
-  {
-    id: 'prod-04',
-    name: 'Vortex Inverter Air Purifier Pro',
-    slug: 'vortex-inverter-air-purifier-pro',
-    description: 'Medical-grade H13 True HEPA multi-stage filtration system with laser particle sensor and whisper-quiet brushless DC motor.',
-    price: 299.00,
-    stock: 18,
-    categoryId: 'cat-03',
-    categoryName: 'Home Appliances',
-    categorySlug: 'home-appliances',
-    imageUrl: 'https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=800&auto=format&fit=crop&q=80',
-    galleryUrls: ['https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=800&auto=format&fit=crop&q=80'],
-    featured: false,
-    rating: 4.9,
-    reviewsCount: 52,
-    brand: 'Dyson',
-    createdAt: new Date('2026-02-05T10:00:00Z'),
-    updatedAt: new Date('2026-02-05T10:00:00Z'),
-  },
-  {
-    id: 'prod-05',
-    name: 'VoltMaster 20V Brushless Cordless Drill',
-    slug: 'voltmaster-20v-brushless-cordless-drill',
-    description: 'Industrial-grade dual-speed 20V hammer drill with 65Nm torque, magnetic bit holder, and 2x 4.0Ah lithium battery packs.',
-    price: 159.00,
-    stock: 25,
-    categoryId: 'cat-04',
-    categoryName: 'Electrical Tools',
-    categorySlug: 'electrical-tools',
-    imageUrl: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=800&auto=format&fit=crop&q=80',
-    galleryUrls: ['https://images.unsplash.com/photo-1504148455328-c376907d081c?w=800&auto=format&fit=crop&q=80'],
-    featured: true,
-    rating: 5.0,
-    reviewsCount: 88,
-    brand: 'Sarhad Heavy-Duty',
-    createdAt: new Date('2026-02-10T10:00:00Z'),
-    updatedAt: new Date('2026-02-10T10:00:00Z'),
-  },
-  {
-    id: 'prod-06',
-    name: 'AeroGlide Robotic Vacuum & Mop',
-    slug: 'aeroglide-robotic-vacuum-mop',
-    description: 'LiDAR precision navigation robot with 5000Pa suction, auto-empty dustbin station, and sonic floor scrub technology.',
-    price: 499.00,
-    stock: 14,
-    categoryId: 'cat-03',
-    categoryName: 'Home Appliances',
-    categorySlug: 'home-appliances',
-    imageUrl: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&auto=format&fit=crop&q=80',
-    galleryUrls: ['https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&auto=format&fit=crop&q=80'],
-    featured: false,
-    rating: 4.8,
-    reviewsCount: 41,
-    brand: 'LG',
-    createdAt: new Date('2026-02-15T10:00:00Z'),
-    updatedAt: new Date('2026-02-15T10:00:00Z'),
-  },
-  {
-    id: 'prod-07',
-    name: 'TrueRMS Digital Clamp Multimeter Pro',
-    slug: 'truerms-digital-clamp-multimeter-pro',
-    description: '6000-count auto-ranging multimeter with NCV non-contact AC voltage sensor, temperature probe, and backlit OLED screen.',
-    price: 65.00,
-    stock: 40,
-    categoryId: 'cat-04',
-    categoryName: 'Electrical Tools',
-    categorySlug: 'electrical-tools',
-    imageUrl: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=800&auto=format&fit=crop&q=80',
-    galleryUrls: ['https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=800&auto=format&fit=crop&q=80'],
-    featured: false,
-    rating: 4.9,
-    reviewsCount: 63,
-    brand: 'Sarhad Tools',
-    createdAt: new Date('2026-02-18T10:00:00Z'),
-    updatedAt: new Date('2026-02-18T10:00:00Z'),
-  },
-  {
-    id: 'prod-08',
-    name: 'Photon Architectural Pendant Light',
-    slug: 'photon-architectural-pendant-light',
-    description: 'Minimalist aerodynamic circular pendant with touch dimmer, glare-free diffuser, and 3000K-6500K CCT adjustable spectrum.',
-    price: 120.00,
-    stock: 22,
-    categoryId: 'cat-02',
-    categoryName: 'Modern Lighting',
-    categorySlug: 'modern-lighting',
-    imageUrl: 'https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?w=800&auto=format&fit=crop&q=80',
-    galleryUrls: ['https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?w=800&auto=format&fit=crop&q=80'],
-    featured: false,
-    rating: 4.6,
-    reviewsCount: 29,
-    brand: 'Philips',
-    createdAt: new Date('2026-02-22T10:00:00Z'),
-    updatedAt: new Date('2026-02-22T10:00:00Z'),
-  }
-];
+// Initial products array (empty, ready for real inventory)
+export const initialProducts: any[] = [];
 
 export const initialCategories = [
   { id: 'cat-00', name: 'All Items', slug: 'all-items' },
@@ -176,7 +20,7 @@ export const initialCategories = [
   { id: 'cat-04', name: 'Electrical Tools', slug: 'electrical-tools', description: 'Precision industrial multimeters, drills, and hardware' },
 ];
 
-export let memoryProducts = [...initialProducts];
+export let memoryProducts: any[] = [];
 export let memoryCategories = [...initialCategories];
 export let memoryOrders: any[] = [];
 export let memoryMessages: any[] = [];
@@ -332,29 +176,25 @@ export const createProductInStore = async (data: any) => {
       });
     }
 
-    if (!category) {
-      if (data.categoryName || data.categoryId) {
-        const catName = data.categoryName || data.categoryId;
-        const catSlug = catName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-        category = await prisma.category.upsert({
-          where: { name: catName },
-          update: {},
-          create: {
-            name: catName,
-            slug: catSlug,
-            description: `Products under ${catName}`,
-          },
-        });
-      } else {
-        category = await prisma.category.findFirst();
-      }
+    if (!category && data.categoryName) {
+      category = await prisma.category.findFirst({
+        where: {
+          OR: [
+            { name: { equals: data.categoryName, mode: 'insensitive' as const } },
+            { slug: data.categoryName.toLowerCase().replace(/[^a-z0-9]+/g, '-') }
+          ]
+        }
+      });
     }
 
     if (!category) {
+      const catName = data.categoryName || 'General Electronics';
+      const catSlug = (catName.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'general') + '-' + Date.now().toString().slice(-4);
       category = await prisma.category.create({
         data: {
-          name: 'Smart Gadgets',
-          slug: 'smart-gadgets',
+          name: catName,
+          slug: catSlug,
+          description: `Products under ${catName}`,
         },
       });
     }

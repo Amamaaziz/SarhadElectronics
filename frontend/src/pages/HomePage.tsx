@@ -157,7 +157,7 @@ export const HomePage: React.FC = () => {
               </motion.div>
             </motion.div>
 
-            {/* Right Hero Product Showcase with Floating Levitation */}
+            {/* Right Hero Product Showcase or Brand Showcase */}
             <div className="lg:col-span-5 flex justify-center">
               {heroFeatured ? (
                 <motion.div
@@ -228,7 +228,50 @@ export const HomePage: React.FC = () => {
                     </div>
                   </div>
                 </motion.div>
-              ) : null}
+              ) : (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  transition={{ duration: 0.8, delay: 0.2 }}
+                  className="relative w-full max-w-md"
+                >
+                  <div className="absolute -inset-1 bg-gradient-to-tr from-cyan-neon/30 via-magenta-purple/30 to-cyan-neon/30 rounded-3xl opacity-40 blur-xl animate-pulse-glow" />
+                  <div className="relative rounded-3xl bg-surface-card/90 border border-cyan-neon/30 p-8 text-center space-y-6 shadow-2xl backdrop-blur-2xl">
+                    <div className="w-16 h-16 rounded-2xl bg-cyan-neon/10 border border-cyan-neon/30 mx-auto flex items-center justify-center text-cyan-neon shadow-neon-cyan">
+                      <Zap className="w-8 h-8" />
+                    </div>
+                    <div className="space-y-2">
+                      <span className="text-xs font-bold uppercase tracking-widest text-cyan-neon font-['Space_Grotesk']">
+                        Official Store Experience
+                      </span>
+                      <h3 className="text-2xl font-bold font-['Space_Grotesk'] text-white">
+                        Sarhad Electronics
+                      </h3>
+                      <p className="text-xs text-textMuted leading-relaxed">
+                        Peshawar's trusted destination for precision hardware, smart gadgets, and architectural lighting solutions.
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 pt-2 text-left">
+                      <div className="p-3 rounded-xl bg-navy-900/80 border border-surface-border">
+                        <div className="text-[11px] font-bold text-white">Cash on Delivery</div>
+                        <div className="text-[10px] text-textMuted">Safe nationwide delivery</div>
+                      </div>
+                      <div className="p-3 rounded-xl bg-navy-900/80 border border-surface-border">
+                        <div className="text-[11px] font-bold text-white">100% Genuine</div>
+                        <div className="text-[10px] text-textMuted">Verified brand hardware</div>
+                      </div>
+                    </div>
+
+                    <Link
+                      to="/shop"
+                      className="block w-full py-3.5 rounded-xl bg-cyan-neon text-navy-950 font-bold text-xs uppercase tracking-wider font-['Space_Grotesk'] shadow-neon-cyan hover:shadow-neon-cyan-lg transition-all"
+                    >
+                      Explore Categories
+                    </Link>
+                  </div>
+                </motion.div>
+              )}
             </div>
           </motion.div>
         </div>
@@ -284,6 +327,20 @@ export const HomePage: React.FC = () => {
             {[...Array(4)].map((_, i) => (
               <div key={i} className="h-80 rounded-2xl bg-surface/30 animate-pulse border border-surface-border" />
             ))}
+          </div>
+        ) : products.length === 0 ? (
+          <div className="text-center py-16 px-6 rounded-3xl bg-surface/20 border border-surface-border space-y-4">
+            <Zap className="w-10 h-10 text-cyan-neon mx-auto opacity-70 animate-pulse" />
+            <h3 className="text-xl font-bold font-['Space_Grotesk'] text-white">New Products Arriving Soon</h3>
+            <p className="text-sm text-textMuted max-w-md mx-auto">
+              Our catalog is ready for real inventory. Use the Admin Panel to add new products and manage inventory live.
+            </p>
+            <Link
+              to="/shop"
+              className="inline-block px-6 py-2.5 rounded-xl bg-cyan-neon text-navy-950 font-bold text-xs uppercase tracking-wider font-['Space_Grotesk'] shadow-neon-cyan"
+            >
+              Browse Shop
+            </Link>
           </div>
         ) : (
           <motion.div
