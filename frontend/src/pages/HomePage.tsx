@@ -233,12 +233,18 @@ export const HomePage: React.FC = () => {
           </motion.div>
         </div>
 
-        {/* Explore scroll-down hint */}
-        <div className="hidden lg:flex absolute bottom-8 right-[8%] flex-col items-center gap-3 text-textMuted/60">
-          <span className="text-[10px] uppercase tracking-[0.3em] [writing-mode:vertical-rl]">
-            Explore
-          </span>
-          <span className="w-px h-10 bg-gradient-to-b from-cyan-neon/70 to-transparent" />
+        {/* Explore scroll-down hint centered with bouncing motion */}
+        <div className="hidden lg:flex absolute bottom-4 left-1/2 -translate-x-1/2 flex-col items-center gap-2 text-textMuted/60 z-20">
+          <motion.div
+            animate={{ y: [0, 8, 0] }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+            className="flex flex-col items-center gap-2"
+          >
+            <span className="text-[10px] uppercase tracking-[0.3em] font-['Space_Grotesk'] font-medium">
+              Explore
+            </span>
+            <span className="w-px h-8 bg-gradient-to-b from-cyan-neon to-transparent" />
+          </motion.div>
         </div>
       </section>
 
