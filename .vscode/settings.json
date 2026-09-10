@@ -2,9 +2,11 @@
     "prisma.pinToPrisma6": true,
     "git.autorefresh": true,
     "git.autofetch": false,
+    "gitlens.views.repositories.autoRefresh": false,
     "files.watcherExclude": {
         "**/.git/objects/**": true,
         "**/.git/subtree-cache/**": true,
+        "**/.git/gk/**": true,
         "**/node_modules/**": true,
         "**/dist/**": true
     }
