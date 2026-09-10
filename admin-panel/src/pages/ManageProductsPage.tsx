@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, Trash2, Pencil, Search, X } from 'lucide-react';
+import { Plus, Trash2, Pencil, Search, X, FolderPlus, Check } from 'lucide-react';
 import {
   getAdminProducts,
+  getAdminCategories,
+  createAdminCategory,
   createAdminProduct,
   updateAdminProduct,
   deleteAdminProduct,
 } from '../services/adminApi';
-import { AdminProduct } from '../types';
+import { AdminProduct, AdminCategory } from '../types';
 
 const emptyForm = {
   name: '',
@@ -21,6 +23,7 @@ const emptyForm = {
 
 export const ManageProductsPage: React.FC = () => {
   const [products, setProducts] = useState<AdminProduct[]>([]);
+  const [categories, setCategories] = useState<AdminCategory[]>([]);
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -28,17 +31,38 @@ export const ManageProductsPage: React.FC = () => {
 
   const [formData, setFormData] = useState(emptyForm);
 
-  const loadProducts = () => {
-    getAdminProducts().then(setProducts);
+  // Category creation states
+  const [isAddingCategory, setIsAddingCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [addingCategoryLoading, setAddingCategoryLoading] = useState(false);
+  const [categorySuccessMsg, setCategorySuccessMsg] = useState('');
+
+  const loadData = async () => {
+    try {
+      const [prods, cats] = await Promise.all([
+        getAdminProducts(),
+        getAdminCategories(),
+      ]);
+      setProducts(prods);
+      setCategories(cats);
+    } catch {
+      // Handled by api fallbacks
+    }
   };
 
   useEffect(() => {
-    loadProducts();
+    loadData();
   }, []);
 
   const openAddModal = () => {
     setEditingId(null);
-    setFormData(emptyForm);
+    setFormData({
+      ...emptyForm,
+      categoryId: categories[0]?.id || 'cat-01',
+    });
+    setIsAddingCategory(false);
+    setNewCategoryName('');
+    setCategorySuccessMsg('');
     setIsModalOpen(true);
   };
 
@@ -49,12 +73,51 @@ export const ManageProductsPage: React.FC = () => {
       description: prod.description || '',
       price: String(prod.price),
       stock: String(prod.stock),
-      categoryId: prod.categoryId || 'cat-01',
+      categoryId: prod.categoryId || categories[0]?.id || 'cat-01',
       brand: prod.brand || 'Sarhad',
       featured: prod.featured,
       imageUrl: prod.imageUrl || '',
     });
+    setIsAddingCategory(false);
+    setNewCategoryName('');
+    setCategorySuccessMsg('');
     setIsModalOpen(true);
+  };
+
+  const handleCreateCategory = async () => {
+    if (!newCategoryName.trim()) return;
+    setAddingCategoryLoading(true);
+
+    try {
+      const res = await createAdminCategory({ name: newCategoryName.trim() });
+      const createdCat: AdminCategory = res.data?.data || {
+        id: `cat-${Date.now()}`,
+        name: newCategoryName.trim(),
+        slug: newCategoryName.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+      };
+
+      setCategories((prev) => [...prev, createdCat]);
+      setFormData((prev) => ({ ...prev, categoryId: createdCat.id }));
+      setCategorySuccessMsg(`Category "${createdCat.name}" created!`);
+      setNewCategoryName('');
+      setIsAddingCategory(false);
+      setTimeout(() => setCategorySuccessMsg(''), 4000);
+    } catch {
+      // Local fallback
+      const localCat: AdminCategory = {
+        id: `cat-${Date.now()}`,
+        name: newCategoryName.trim(),
+        slug: newCategoryName.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+      };
+      setCategories((prev) => [...prev, localCat]);
+      setFormData((prev) => ({ ...prev, categoryId: localCat.id }));
+      setCategorySuccessMsg(`Category "${localCat.name}" created!`);
+      setNewCategoryName('');
+      setIsAddingCategory(false);
+      setTimeout(() => setCategorySuccessMsg(''), 4000);
+    } finally {
+      setAddingCategoryLoading(false);
+    }
   };
 
   const handleDelete = async (id: string) => {
@@ -71,28 +134,31 @@ export const ManageProductsPage: React.FC = () => {
     e.preventDefault();
     setSubmitting(true);
 
+    const activeCat = categories.find((c) => c.id === formData.categoryId);
+
     const payload = {
       ...formData,
       price: Number(formData.price),
       stock: Number(formData.stock),
+      categoryName: activeCat?.name,
     };
 
     try {
       if (editingId) {
         await updateAdminProduct(editingId, payload);
         setProducts((prev) =>
-          prev.map((p) => (p.id === editingId ? { ...p, ...payload } : p))
+          prev.map((p) => (p.id === editingId ? { ...p, ...payload, categoryName: activeCat?.name || p.categoryName } : p))
         );
       } else {
         await createAdminProduct(payload);
-        loadProducts();
+        loadData();
       }
       setIsModalOpen(false);
     } catch {
       // Offline fallback: apply the change locally
       if (editingId) {
         setProducts((prev) =>
-          prev.map((p) => (p.id === editingId ? { ...p, ...payload } : p))
+          prev.map((p) => (p.id === editingId ? { ...p, ...payload, categoryName: activeCat?.name || p.categoryName } : p))
         );
       } else {
         const newProd: AdminProduct = {
@@ -102,7 +168,7 @@ export const ManageProductsPage: React.FC = () => {
           price: Number(formData.price),
           stock: Number(formData.stock),
           categoryId: formData.categoryId,
-          categoryName: formData.categoryId === 'cat-01' ? 'Smart Gadgets' : 'Modern Lighting',
+          categoryName: activeCat?.name || 'Smart Tech',
           imageUrl: formData.imageUrl || 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=800&auto=format&fit=crop&q=80',
           featured: formData.featured,
           brand: formData.brand,
@@ -301,18 +367,81 @@ export const ManageProductsPage: React.FC = () => {
                   />
                 </div>
 
-                <div>
-                  <label className="text-xs text-muted block mb-1">Category</label>
-                  <select
-                    value={formData.categoryId}
-                    onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-page border border-line text-sm text-body focus:outline-hidden focus:border-body cursor-pointer"
-                  >
-                    <option value="cat-01">Smart Gadgets</option>
-                    <option value="cat-02">Modern Lighting</option>
-                    <option value="cat-03">Home Appliances</option>
-                    <option value="cat-04">Electrical Tools</option>
-                  </select>
+                <div className="sm:col-span-1">
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs text-muted block">Category *</label>
+                    <button
+                      type="button"
+                      onClick={() => setIsAddingCategory(!isAddingCategory)}
+                      className="text-[11px] font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1 transition-colors"
+                    >
+                      <FolderPlus className="w-3 h-3" /> New
+                    </button>
+                  </div>
+
+                  {isAddingCategory ? (
+                    <div className="p-2.5 bg-page border border-line rounded-lg space-y-2">
+                      <input
+                        type="text"
+                        value={newCategoryName}
+                        onChange={(e) => setNewCategoryName(e.target.value)}
+                        placeholder="e.g. Solar Inverters"
+                        className="w-full px-2.5 py-1.5 rounded-md bg-card border border-line text-xs text-body focus:outline-hidden"
+                        autoFocus
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleCreateCategory();
+                          }
+                        }}
+                      />
+                      <div className="flex justify-end gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsAddingCategory(false);
+                            setNewCategoryName('');
+                          }}
+                          className="px-2 py-1 text-xs text-muted hover:text-body rounded"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          disabled={!newCategoryName.trim() || addingCategoryLoading}
+                          onClick={handleCreateCategory}
+                          className="px-2.5 py-1 bg-ink text-white rounded text-xs font-semibold hover:bg-ink-soft disabled:opacity-50 flex items-center gap-1"
+                        >
+                          {addingCategoryLoading ? 'Saving...' : 'Save'}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <select
+                      value={formData.categoryId}
+                      onChange={(e) => {
+                        if (e.target.value === '__NEW__') {
+                          setIsAddingCategory(true);
+                        } else {
+                          setFormData({ ...formData, categoryId: e.target.value });
+                        }
+                      }}
+                      className="w-full px-3 py-2 rounded-lg bg-page border border-line text-sm text-body focus:outline-hidden focus:border-body cursor-pointer"
+                    >
+                      {categories.map((cat) => (
+                        <option key={cat.id} value={cat.id}>
+                          {cat.name}
+                        </option>
+                      ))}
+                      <option value="__NEW__">+ Add New Category...</option>
+                    </select>
+                  )}
+
+                  {categorySuccessMsg && (
+                    <p className="text-[11px] text-emerald-600 mt-1 flex items-center gap-1">
+                      <Check className="w-3 h-3" /> {categorySuccessMsg}
+                    </p>
+                  )}
                 </div>
               </div>
 

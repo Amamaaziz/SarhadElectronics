@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Trash2, Plus, Minus, ShoppingBag, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { X, Trash2, Plus, Minus, ShoppingBag, ArrowRight, CheckCircle2, Banknote } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { createOrderApi } from '../services/api';
@@ -144,37 +144,33 @@ export const CartDrawer: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="text-xs text-textMuted block mb-1">Payment Method</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setPaymentMethod('COD')}
-                      className={`p-2.5 rounded-lg text-xs font-semibold border text-center transition-all ${
-                        paymentMethod === 'COD'
-                          ? 'border-cyan-neon bg-cyan-neon/10 text-cyan-neon'
-                          : 'border-surface-border bg-surface text-textMuted'
-                      }`}
-                    >
-                      Cash on Delivery
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setPaymentMethod('BANK')}
-                      className={`p-2.5 rounded-lg text-xs font-semibold border text-center transition-all ${
-                        paymentMethod === 'BANK'
-                          ? 'border-cyan-neon bg-cyan-neon/10 text-cyan-neon'
-                          : 'border-surface-border bg-surface text-textMuted'
-                      }`}
-                    >
-                      Direct Bank Transfer
-                    </button>
+                  <label className="text-xs text-textMuted block mb-1.5 font-medium">Payment Method</label>
+                  <div className="p-3.5 rounded-xl bg-cyan-neon/10 border border-cyan-neon/40 flex items-center justify-between shadow-neon-cyan/20">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-lg bg-cyan-neon/20 border border-cyan-neon/30 flex items-center justify-center text-cyan-neon">
+                        <Banknote className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="text-xs font-bold text-white font-['Space_Grotesk'] tracking-wide">
+                            Cash on Delivery (COD)
+                          </p>
+                          <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-cyan-neon text-navy-950 uppercase">
+                            Only Option
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-textMuted mt-0.5">
+                          Pay in cash when parcel is handed to you at your address.
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
                 <div className="p-3 rounded-lg bg-surface/30 border border-surface-border text-xs space-y-1 text-textMuted">
                   <div className="flex justify-between">
                     <span>Subtotal:</span>
-                    <span className="text-white">${subtotal.toFixed(2)}</span>
+                    <span className="text-white">Rs.{subtotal.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Express Shipping:</span>
@@ -182,7 +178,7 @@ export const CartDrawer: React.FC = () => {
                   </div>
                   <div className="flex justify-between font-bold text-white pt-1 border-t border-surface-border">
                     <span>Total Amount:</span>
-                    <span className="text-cyan-neon font-['Space_Grotesk']">${subtotal.toFixed(2)}</span>
+                    <span className="text-cyan-neon font-['Space_Grotesk']">Rs.{subtotal.toFixed(2)}</span>
                   </div>
                 </div>
               </form>
@@ -209,7 +205,7 @@ export const CartDrawer: React.FC = () => {
                         {item.product.name}
                       </h4>
                       <p className="text-xs text-cyan-neon font-['Space_Grotesk'] font-bold">
-                        ${Number(item.product.price).toFixed(2)}
+                        Rs.{Number(item.product.price).toFixed(2)}
                       </p>
 
                       {/* Quantity Controls */}
@@ -252,7 +248,7 @@ export const CartDrawer: React.FC = () => {
               <div className="flex items-center justify-between text-sm">
                 <span className="text-textMuted">Subtotal</span>
                 <span className="text-xl font-bold font-['Space_Grotesk'] text-cyan-neon">
-                  ${subtotal.toFixed(2)}
+                  Rs.{subtotal.toFixed(2)}
                 </span>
               </div>
 
@@ -290,4 +286,3 @@ export const CartDrawer: React.FC = () => {
     </div>
   );
 };
-

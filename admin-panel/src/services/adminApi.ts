@@ -120,6 +120,26 @@ const fallbackAdminMessages: AdminContactMessage[] = [
   }
 ];
 
+const fallbackAdminCategories: AdminCategory[] = [
+  { id: 'cat-01', name: 'Smart Gadgets', slug: 'smart-gadgets', description: 'Wearables, audio gears & personal electronics' },
+  { id: 'cat-02', name: 'Modern Lighting', slug: 'modern-lighting', description: 'Ambient and smart architectural lights' },
+  { id: 'cat-03', name: 'Home Appliances', slug: 'home-appliances', description: 'Smart living appliances & climate solutions' },
+  { id: 'cat-04', name: 'Electrical Tools', slug: 'electrical-tools', description: 'Industrial precision equipment and tools' },
+];
+
+export const getAdminCategories = async (): Promise<AdminCategory[]> => {
+  try {
+    const res = await adminApi.get('/categories');
+    return res.data?.data || fallbackAdminCategories;
+  } catch {
+    return fallbackAdminCategories;
+  }
+};
+
+export const createAdminCategory = async (categoryData: { name: string; description?: string }) => {
+  return adminApi.post('/categories', categoryData);
+};
+
 export const getAdminProducts = async (): Promise<AdminProduct[]> => {
   try {
     const res = await adminApi.get('/products');

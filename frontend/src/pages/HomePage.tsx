@@ -1,11 +1,10 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Zap, Shield, Sparkles, Volume2 } from 'lucide-react';
+import { ArrowRight, Zap, Sparkles, Volume2 } from 'lucide-react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { Product } from '../types';
 import { fetchProductsApi } from '../services/api';
 import { ProductCard } from '../components/ProductCard';
-import { TrustMetrics } from '../components/TrustMetrics';
 import { BrandMarquee } from '../components/BrandMarquee';
 import { PromoBanner } from '../components/PromoBanner';
 import { NewsletterSection } from '../components/NewsletterSection';
@@ -116,26 +115,44 @@ export const HomePage: React.FC = () => {
 
                 <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                   <Link
-                    to="/about"
-                    className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-surface/60 hover:bg-surface border border-surface-border hover:border-cyan-neon text-white font-medium text-sm transition-all text-center block"
+                    to="/shop"
+                    className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-transparent hover:bg-surface/40 text-textMuted hover:text-white font-bold text-xs tracking-widest uppercase font-['Space_Grotesk'] transition-all text-center block"
                   >
-                    Our Mission & Story
+                    View Deals
                   </Link>
                 </motion.div>
               </motion.div>
 
-              {/* Fast trust highlights */}
+              {/* Fast trust stats row */}
               <motion.div
                 variants={itemVariants}
-                className="pt-4 flex items-center justify-center lg:justify-start gap-6 text-xs text-textMuted"
+                className="pt-6 flex items-center justify-center lg:justify-start gap-8 sm:gap-10"
               >
-                <div className="flex items-center gap-2">
-                  <Shield className="w-4 h-4 text-cyan-neon animate-pulse" />
-                  <span>Official Brand Warranty</span>
+                <div>
+                  <div className="text-2xl sm:text-3xl font-extrabold font-['Space_Grotesk'] text-white">
+                    50k+
+                  </div>
+                  <div className="text-[11px] text-textMuted uppercase tracking-wider mt-0.5">
+                    Products Sold
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Zap className="w-4 h-4 text-magenta-neon animate-pulse" />
-                  <span>Same-Day Dispatch in Peshawar</span>
+                <div className="h-10 w-px bg-surface-border hidden sm:block" />
+                <div>
+                  <div className="text-2xl sm:text-3xl font-extrabold font-['Space_Grotesk'] text-white">
+                    4.9/5
+                  </div>
+                  <div className="text-[11px] text-textMuted uppercase tracking-wider mt-0.5">
+                    User Rating
+                  </div>
+                </div>
+                <div className="h-10 w-px bg-surface-border hidden sm:block" />
+                <div>
+                  <div className="text-2xl sm:text-3xl font-extrabold font-['Space_Grotesk'] text-white">
+                    24/7
+                  </div>
+                  <div className="text-[11px] text-textMuted uppercase tracking-wider mt-0.5">
+                    Tech Support
+                  </div>
                 </div>
               </motion.div>
             </motion.div>
@@ -185,7 +202,7 @@ export const HomePage: React.FC = () => {
                           {heroFeatured.name}
                         </h3>
                         <span className="text-2xl font-black font-['Space_Grotesk'] text-cyan-neon drop-shadow-[0_0_8px_rgba(0,229,255,0.4)]">
-                          ${Number(heroFeatured.price).toFixed(2)}
+                          Rs.{Number(heroFeatured.price).toFixed(2)}
                         </span>
                       </div>
                       <p className="text-xs text-textMuted line-clamp-2">
@@ -215,10 +232,15 @@ export const HomePage: React.FC = () => {
             </div>
           </motion.div>
         </div>
-      </section>
 
-      {/* Trust Metrics Display */}
-      <TrustMetrics />
+        {/* Explore scroll-down hint */}
+        <div className="hidden lg:flex absolute bottom-8 right-[8%] flex-col items-center gap-3 text-textMuted/60">
+          <span className="text-[10px] uppercase tracking-[0.3em] [writing-mode:vertical-rl]">
+            Explore
+          </span>
+          <span className="w-px h-10 bg-gradient-to-b from-cyan-neon/70 to-transparent" />
+        </div>
+      </section>
 
       {/* Scrolling Brand Marquee */}
       <BrandMarquee />

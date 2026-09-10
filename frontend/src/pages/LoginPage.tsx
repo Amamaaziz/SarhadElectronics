@@ -22,16 +22,6 @@ export const LoginPage: React.FC = () => {
     }
   };
 
-  const fillDemoCustomer = () => {
-    setEmail('user@sarhadelectrics.com');
-    setPassword('demo123');
-  };
-
-  const fillDemoAdmin = () => {
-    setEmail('admin@sarhadelectrics.com');
-    setPassword('admin123');
-  };
-
   return (
     <div className="min-h-[75vh] flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md space-y-6">
@@ -112,27 +102,6 @@ export const LoginPage: React.FC = () => {
               )}
             </button>
           </form>
-
-          {/* Quick fill buttons */}
-          <div className="mt-6 pt-4 border-t border-surface-border text-center space-y-2">
-            <span className="text-[11px] text-textMuted block">Quick Test Logins:</span>
-            <div className="flex justify-center gap-2">
-              <button
-                type="button"
-                onClick={fillDemoCustomer}
-                className="px-2.5 py-1 text-[11px] rounded-lg bg-surface border border-surface-border text-slate-300 hover:text-cyan-neon"
-              >
-                Customer Demo
-              </button>
-              <button
-                type="button"
-                onClick={fillDemoAdmin}
-                className="px-2.5 py-1 text-[11px] rounded-lg bg-surface border border-surface-border text-slate-300 hover:text-cyan-neon"
-              >
-                Admin Demo
-              </button>
-            </div>
-          </div>
         </div>
 
         {/* Footer Link */}

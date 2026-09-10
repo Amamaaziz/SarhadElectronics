@@ -11,10 +11,10 @@ interface ProductCardProps {
 export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { addToCart } = useCart();
 
-  const formattedPrice = Number(product.price).toLocaleString('en-US', {
-    style: 'currency',
-    currency: 'USD',
-  });
+  const formattedPrice = `Rs.${Number(product.price).toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
 
   return (
     <div className="group relative rounded-2xl bg-surface-card border border-surface-border overflow-hidden flex flex-col hover:border-cyan-neon/40 hover:shadow-neon-cyan transition-all duration-300">
@@ -105,4 +105,3 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     </div>
   );
 };
-

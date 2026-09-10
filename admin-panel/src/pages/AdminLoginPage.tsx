@@ -3,8 +3,8 @@ import { Lock, Mail, AlertCircle, Zap } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
 
 export const AdminLoginPage: React.FC = () => {
-  const [email, setEmail] = useState('admin@sarhadelectrics.com');
-  const [password, setPassword] = useState('admin123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const { login } = useAdminAuth();
 
@@ -51,6 +51,7 @@ export const AdminLoginPage: React.FC = () => {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  placeholder="admin@sarhadelectrics.com"
                   className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-page border border-line text-sm text-body focus:outline-hidden focus:border-body"
                 />
                 <Mail className="w-4 h-4 text-muted absolute left-3 top-3" />
@@ -67,6 +68,7 @@ export const AdminLoginPage: React.FC = () => {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
                   className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-page border border-line text-sm text-body focus:outline-hidden focus:border-body"
                 />
                 <Lock className="w-4 h-4 text-muted absolute left-3 top-3" />
@@ -80,12 +82,6 @@ export const AdminLoginPage: React.FC = () => {
               Authenticate as Administrator
             </button>
           </form>
-
-          <div className="mt-4 pt-4 border-t border-line text-center">
-            <span className="text-xs text-muted">
-              Pre-filled with demo administrator credentials for evaluation.
-            </span>
-          </div>
         </div>
       </div>
     </div>

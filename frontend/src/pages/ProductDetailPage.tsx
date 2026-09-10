@@ -147,7 +147,7 @@ export const ProductDetailPage: React.FC = () => {
           <div className="space-y-1">
             <span className="text-xs text-textMuted block">Retail Price</span>
             <div className="text-4xl font-black font-['Space_Grotesk'] text-cyan-neon">
-              ${Number(product.price).toFixed(2)}
+              Rs.{Number(product.price).toFixed(2)}
             </div>
           </div>
 
@@ -229,4 +229,3 @@ export const ProductDetailPage: React.FC = () => {
     </div>
   );
 };
-
