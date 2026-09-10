@@ -3,8 +3,17 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    scroll-behavior: smooth;
+  }
   body {
     background-color: #081021;
+    background-image: 
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(11, 108, 207, 0.28), transparent 70%),
+      radial-gradient(ellipse 60% 40% at 100% 50%, rgba(14, 30, 62, 0.5), transparent 70%),
+      radial-gradient(ellipse 60% 40% at 0% 80%, rgba(11, 108, 207, 0.15), transparent 70%),
+      linear-gradient(180deg, #0E1E3E 0%, #081021 40%, #081021 70%, #0E1E3E 100%);
+    background-attachment: fixed;
     color: #FFFFFF;
     overflow-x: hidden;
   }
@@ -12,24 +21,62 @@
 
 @layer utilities {
   .glow-cyan {
-    box-shadow: 0 0 20px rgba(0, 229, 255, 0.35);
+    box-shadow: 0 0 20px rgba(0, 229, 255, 0.4);
   }
   .glow-cyan-sm {
-    box-shadow: 0 0 10px rgba(0, 229, 255, 0.25);
+    box-shadow: 0 0 10px rgba(0, 229, 255, 0.3);
+  }
+  .glow-cyan-lg {
+    box-shadow: 0 0 35px rgba(0, 229, 255, 0.6);
   }
   .glow-magenta {
-    box-shadow: 0 0 20px rgba(236, 72, 153, 0.35);
+    box-shadow: 0 0 25px rgba(236, 72, 153, 0.4);
   }
   .glass-card {
-    background: rgba(19, 29, 51, 0.7);
-    backdrop-filter: blur(12px);
+    background: rgba(19, 29, 51, 0.65);
+    backdrop-filter: blur(16px);
     border: 1px solid rgba(0, 229, 255, 0.12);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
   .glass-card:hover {
-    border-color: rgba(0, 229, 255, 0.35);
+    border-color: rgba(0, 229, 255, 0.4);
+    box-shadow: 0 12px 30px -10px rgba(0, 229, 255, 0.25);
+    transform: translateY(-4px);
   }
   .neon-text-cyan {
-    text-shadow: 0 0 12px rgba(0, 229, 255, 0.6);
+    text-shadow: 0 0 12px rgba(0, 229, 255, 0.7);
+  }
+  .neon-text-magenta {
+    text-shadow: 0 0 14px rgba(236, 72, 153, 0.7);
+  }
+  .cyber-grid-bg {
+    background-size: 40px 40px;
+    background-image: 
+      linear-gradient(to right, rgba(0, 229, 255, 0.04) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(0, 229, 255, 0.04) 1px, transparent 1px);
+  }
+  .btn-shine {
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-shine::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+      60deg,
+      transparent,
+      rgba(255, 255, 255, 0.2),
+      transparent
+    );
+    transform: rotate(30deg) translateY(-100%);
+    transition: transform 0.6s ease;
+  }
+  .btn-shine:hover::after {
+    transform: rotate(30deg) translateY(100%);
   }
 }
 
@@ -49,4 +96,3 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #00E5FF;
 }
-
