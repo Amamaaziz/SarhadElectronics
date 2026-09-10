@@ -4,25 +4,23 @@
 
 @layer base {
   body {
-    background-color: #081021;
-    color: #FFFFFF;
-    overflow-x: hidden;
+    background-color: #F6F7F9;
+    color: #1F2430;
   }
 }
 
-/* Custom modern scrollbar */
+/* Slim, quiet scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #081021;
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #1E293B;
+  background: #D8DBE2;
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #00E5FF;
+  background: #B9BEC9;
 }
-

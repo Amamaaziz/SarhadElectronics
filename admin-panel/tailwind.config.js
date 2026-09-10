@@ -8,33 +8,23 @@ export default {
   theme: {
     extend: {
       colors: {
-        navy: {
-          950: '#081021',
-          900: '#0B132B',
-          800: '#0F172A',
-          700: '#162032',
+        ink: {
+          DEFAULT: '#0B0F1A',
+          soft: '#151B2B',
         },
-        surface: {
-          DEFAULT: '#1E293B',
-          card: '#131D33',
-          border: 'rgba(0, 229, 255, 0.15)',
-        },
-        cyan: {
-          neon: '#00E5FF',
-          hover: '#00C8E0',
-        },
-        magenta: {
-          neon: '#EC4899',
-          purple: '#A855F7',
-        },
-        textMuted: '#94A3B8',
+        page: '#F6F7F9',
+        card: '#FFFFFF',
+        line: '#E7E9EE',
+        muted: '#8A8F98',
+        body: '#1F2430',
       },
       boxShadow: {
-        'neon-cyan': '0 0 15px rgba(0, 229, 255, 0.35)',
-        'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
+        card: '0 1px 2px rgba(16, 20, 30, 0.04), 0 8px 24px -12px rgba(16, 20, 30, 0.10)',
+      },
+      borderRadius: {
+        card: '18px',
       },
     },
   },
   plugins: [],
 }
-

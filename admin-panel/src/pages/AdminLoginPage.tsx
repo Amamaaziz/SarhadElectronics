@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShieldCheck, Lock, Mail, AlertCircle, Zap } from 'lucide-react';
+import { Lock, Mail, AlertCircle, Zap } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
 
 export const AdminLoginPage: React.FC = () => {
@@ -18,23 +18,23 @@ export const AdminLoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-navy-950 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-page px-4">
       <div className="w-full max-w-md space-y-6">
         <div className="text-center space-y-2">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-cyan-neon to-magenta-purple flex items-center justify-center mx-auto shadow-neon-cyan">
-            <Zap className="w-7 h-7 text-navy-950 fill-navy-950" />
+          <div className="w-12 h-12 rounded-2xl bg-ink flex items-center justify-center mx-auto">
+            <Zap className="w-6 h-6 text-white" />
           </div>
-          <h1 className="text-2xl font-extrabold font-['Space_Grotesk'] text-white">
-            Sarhad Electrics <span className="text-cyan-neon">Control</span>
+          <h1 className="text-2xl font-bold text-body">
+            Sarhad Electrics Control
           </h1>
-          <p className="text-xs text-textMuted">
+          <p className="text-sm text-muted">
             Restricted administrative portal for operations and inventory management.
           </p>
         </div>
 
-        <div className="p-8 rounded-3xl bg-surface-card border border-surface-border shadow-glass">
+        <div className="p-8 rounded-card bg-card border border-line shadow-card">
           {error && (
-            <div className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs flex items-center gap-2">
+            <div className="mb-4 p-3 rounded-lg bg-rose-50 border border-rose-100 text-rose-600 text-sm flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{error}</span>
             </div>
@@ -42,7 +42,7 @@ export const AdminLoginPage: React.FC = () => {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="text-xs text-textMuted block mb-1 font-medium">
+              <label className="text-xs text-muted block mb-1 font-medium">
                 Admin Email
               </label>
               <div className="relative">
@@ -51,14 +51,14 @@ export const AdminLoginPage: React.FC = () => {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-navy-900 border border-surface-border text-xs text-white focus:outline-hidden focus:border-cyan-neon"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-page border border-line text-sm text-body focus:outline-hidden focus:border-body"
                 />
-                <Mail className="w-4 h-4 text-textMuted absolute left-3 top-3" />
+                <Mail className="w-4 h-4 text-muted absolute left-3 top-3" />
               </div>
             </div>
 
             <div>
-              <label className="text-xs text-textMuted block mb-1 font-medium">
+              <label className="text-xs text-muted block mb-1 font-medium">
                 Security Password
               </label>
               <div className="relative">
@@ -67,22 +67,22 @@ export const AdminLoginPage: React.FC = () => {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-navy-900 border border-surface-border text-xs text-white focus:outline-hidden focus:border-cyan-neon"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-page border border-line text-sm text-body focus:outline-hidden focus:border-body"
                 />
-                <Lock className="w-4 h-4 text-textMuted absolute left-3 top-3" />
+                <Lock className="w-4 h-4 text-muted absolute left-3 top-3" />
               </div>
             </div>
 
             <button
               type="submit"
-              className="w-full py-3 rounded-xl bg-cyan-neon text-navy-950 font-bold text-xs uppercase tracking-wider font-['Space_Grotesk'] hover:shadow-neon-cyan transition-all"
+              className="w-full py-3 rounded-lg bg-ink text-white font-semibold text-sm hover:bg-ink-soft transition-all"
             >
               Authenticate as Administrator
             </button>
           </form>
 
-          <div className="mt-4 pt-4 border-t border-surface-border text-center">
-            <span className="text-[11px] text-textMuted">
+          <div className="mt-4 pt-4 border-t border-line text-center">
+            <span className="text-xs text-muted">
               Pre-filled with demo administrator credentials for evaluation.
             </span>
           </div>
@@ -91,4 +91,3 @@ export const AdminLoginPage: React.FC = () => {
     </div>
   );
 };
-

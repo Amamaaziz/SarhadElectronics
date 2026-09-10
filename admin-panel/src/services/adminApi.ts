@@ -133,6 +133,10 @@ export const createAdminProduct = async (productData: any) => {
   return adminApi.post('/products', productData);
 };
 
+export const updateAdminProduct = async (id: string, productData: any) => {
+  return adminApi.patch(`/products/${id}`, productData);
+};
+
 export const deleteAdminProduct = async (id: string) => {
   return adminApi.delete(`/products/${id}`);
 };
@@ -158,4 +162,3 @@ export const getAdminMessages = async (): Promise<AdminContactMessage[]> => {
     return fallbackAdminMessages;
   }
 };
-

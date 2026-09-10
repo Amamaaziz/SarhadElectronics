@@ -21,7 +21,7 @@ const AdminLayout: React.FC<{ children: React.ReactNode; title: string; subtitle
   }
 
   return (
-    <div className="flex min-h-screen bg-navy-950 text-white">
+    <div className="flex min-h-screen bg-page text-body">
       <AdminSidebar />
       <div className="flex-1 flex flex-col overflow-x-hidden">
         <AdminHeader title={title} subtitle={subtitle} />
@@ -39,7 +39,7 @@ export const App: React.FC = () => {
           <Route
             path="/"
             element={
-              <AdminLayout title="Operational Command" subtitle="Executive KPI overview & telemetry">
+              <AdminLayout title="Dashboard">
                 <DashboardPage />
               </AdminLayout>
             }
@@ -47,7 +47,7 @@ export const App: React.FC = () => {
           <Route
             path="/products"
             element={
-              <AdminLayout title="Hardware Inventory" subtitle="Manage electronics, appliances, and tools">
+              <AdminLayout title="Products" subtitle="Manage electronics, appliances, and tools">
                 <ManageProductsPage />
               </AdminLayout>
             }
@@ -55,7 +55,7 @@ export const App: React.FC = () => {
           <Route
             path="/orders"
             element={
-              <AdminLayout title="Order Processing" subtitle="Customer orders and dispatch tracking">
+              <AdminLayout title="Orders" subtitle="Customer orders and dispatch tracking">
                 <OrdersPage />
               </AdminLayout>
             }
@@ -63,7 +63,7 @@ export const App: React.FC = () => {
           <Route
             path="/messages"
             element={
-              <AdminLayout title="Communications" subtitle="Customer contact inquiries & bulk requests">
+              <AdminLayout title="Messages" subtitle="Customer contact inquiries & bulk requests">
                 <MessagesPage />
               </AdminLayout>
             }
@@ -76,4 +76,3 @@ export const App: React.FC = () => {
 };
 
 export default App;
-
