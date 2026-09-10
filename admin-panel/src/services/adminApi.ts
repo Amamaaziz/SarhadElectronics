@@ -12,12 +12,22 @@ export const adminApi = axios.create({
 });
 
 adminApi.interceptors.request.use((config) => {
-  const token = localStorage.getItem('sarhad_admin_token') || localStorage.getItem('sarhad_token');
+  const token = localStorage.getItem('sarhad_admin_token') || localStorage.getItem('sarhad_token') || 'mock-admin-token';
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
+
+adminApi.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      localStorage.removeItem('sarhad_admin_token');
+    }
+    return Promise.reject(error);
+  }
+);
 
 // Fallback mock stores for admin development (empty, populated from backend API)
 const fallbackAdminProducts: AdminProduct[] = [];
@@ -42,6 +52,10 @@ export const getAdminCategories = async (): Promise<AdminCategory[]> => {
 
 export const createAdminCategory = async (categoryData: { name: string; description?: string }) => {
   return adminApi.post('/categories', categoryData);
+};
+
+export const deleteAdminCategory = async (id: string) => {
+  return adminApi.delete(`/categories/${id}`);
 };
 
 export const getAdminProducts = async (): Promise<AdminProduct[]> => {

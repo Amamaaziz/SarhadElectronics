@@ -4,6 +4,7 @@ import {
   getAdminProducts,
   getAdminCategories,
   createAdminCategory,
+  deleteAdminCategory,
   createAdminProduct,
   updateAdminProduct,
   deleteAdminProduct,
@@ -25,6 +26,7 @@ export const ManageProductsPage: React.FC = () => {
   const [products, setProducts] = useState<AdminProduct[]>([]);
   const [categories, setCategories] = useState<AdminCategory[]>([]);
   const [search, setSearch] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -32,11 +34,16 @@ export const ManageProductsPage: React.FC = () => {
 
   const [formData, setFormData] = useState(emptyForm);
 
-  // Category creation states
+  // Category creation states inside modal
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [addingCategoryLoading, setAddingCategoryLoading] = useState(false);
   const [categorySuccessMsg, setCategorySuccessMsg] = useState('');
+
+  // Category toolbar states
+  const [isBarAddingCat, setIsBarAddingCat] = useState(false);
+  const [newBarCatName, setNewBarCatName] = useState('');
+  const [barAddingLoading, setBarAddingLoading] = useState(false);
 
   const [modalError, setModalError] = useState('');
 
@@ -110,6 +117,7 @@ export const ManageProductsPage: React.FC = () => {
       setNewCategoryName('');
       setIsAddingCategory(false);
       setTimeout(() => setCategorySuccessMsg(''), 4000);
+      await loadData();
     } catch {
       // Local fallback
       const localCat: AdminCategory = {
@@ -125,6 +133,49 @@ export const ManageProductsPage: React.FC = () => {
       setTimeout(() => setCategorySuccessMsg(''), 4000);
     } finally {
       setAddingCategoryLoading(false);
+    }
+  };
+
+  const handleQuickCreateCategory = async () => {
+    if (!newBarCatName.trim()) return;
+    setBarAddingLoading(true);
+    try {
+      await createAdminCategory({ name: newBarCatName.trim() });
+      await loadData();
+      setNewBarCatName('');
+      setIsBarAddingCat(false);
+    } catch {
+      const localCat: AdminCategory = {
+        id: `cat-${Date.now()}`,
+        name: newBarCatName.trim(),
+        slug: newBarCatName.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+      };
+      setCategories((prev) => [...prev, localCat]);
+      setNewBarCatName('');
+      setIsBarAddingCat(false);
+    } finally {
+      setBarAddingLoading(false);
+    }
+  };
+
+  const handleDeleteCategory = async (catId: string, catName: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (
+      !window.confirm(
+        `Are you sure you want to delete category "${catName}"? Any products under this category will be preserved.`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      await deleteAdminCategory(catId);
+      await loadData();
+      if (selectedCategory === catId) {
+        setSelectedCategory('all');
+      }
+    } catch (err: any) {
+      alert(err?.response?.data?.message || 'Failed to delete category');
     }
   };
 
@@ -172,11 +223,20 @@ export const ManageProductsPage: React.FC = () => {
     }
   };
 
-  const filtered = products.filter(
-    (p) =>
+  const filtered = products.filter((p) => {
+    const matchesSearch =
       p.name.toLowerCase().includes(search.toLowerCase()) ||
-      (p.brand && p.brand.toLowerCase().includes(search.toLowerCase()))
-  );
+      (p.brand && p.brand.toLowerCase().includes(search.toLowerCase()));
+
+    const matchesCategory =
+      selectedCategory === 'all' ||
+      p.categoryId === selectedCategory ||
+      (p.categoryName &&
+        categories.find((c) => c.id === selectedCategory)?.name.toLowerCase() ===
+          p.categoryName.toLowerCase());
+
+    return matchesSearch && matchesCategory;
+  });
 
   return (
     <div className="px-10 pb-10 pt-6 space-y-6">
@@ -199,6 +259,112 @@ export const ManageProductsPage: React.FC = () => {
         >
           <Plus className="w-4 h-4" /> Add New Product
         </button>
+      </div>
+
+      {/* Category Pills & Manager Bar */}
+      <div className="flex flex-wrap items-center gap-2 p-3 bg-card border border-line rounded-card">
+        <div className="text-xs font-semibold text-muted uppercase tracking-wider mr-1 flex items-center gap-1.5">
+          <span>Categories:</span>
+        </div>
+
+        <button
+          onClick={() => setSelectedCategory('all')}
+          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+            selectedCategory === 'all'
+              ? 'bg-ink text-white shadow-xs'
+              : 'bg-page text-muted hover:text-body border border-line'
+          }`}
+        >
+          All Items ({products.length})
+        </button>
+
+        {categories
+          .filter((c) => c.slug !== 'all-items' && c.name.toLowerCase() !== 'all items')
+          .map((cat) => {
+            const count = products.filter(
+              (p) =>
+                p.categoryId === cat.id ||
+                p.categoryName?.toLowerCase() === cat.name.toLowerCase()
+            ).length;
+            const isSelected = selectedCategory === cat.id;
+
+            return (
+              <div
+                key={cat.id}
+                onClick={() => setSelectedCategory(isSelected ? 'all' : cat.id)}
+                className={`group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-all ${
+                  isSelected
+                    ? 'bg-ink text-white shadow-xs'
+                    : 'bg-page text-muted hover:text-body border border-line'
+                }`}
+              >
+                <span>{cat.name}</span>
+                <span
+                  className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                    isSelected ? 'bg-white/20 text-white' : 'bg-line text-muted'
+                  }`}
+                >
+                  {count}
+                </span>
+                <button
+                  type="button"
+                  title={`Delete category "${cat.name}"`}
+                  onClick={(e) => handleDeleteCategory(cat.id, cat.name, e)}
+                  className={`p-0.5 rounded transition-all opacity-40 hover:opacity-100 hover:bg-rose-500 hover:text-white ${
+                    isSelected ? 'text-white hover:bg-rose-600' : 'text-rose-500'
+                  }`}
+                >
+                  <Trash2 className="w-3 h-3" />
+                </button>
+              </div>
+            );
+          })}
+
+        {/* Inline Add Category on Bar */}
+        {isBarAddingCat ? (
+          <div className="inline-flex items-center gap-1 bg-page border border-line rounded-lg p-1">
+            <input
+              type="text"
+              value={newBarCatName}
+              onChange={(e) => setNewBarCatName(e.target.value)}
+              placeholder="Category name..."
+              className="px-2 py-0.5 text-xs bg-card border border-line rounded text-body focus:outline-hidden"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleQuickCreateCategory();
+                }
+              }}
+            />
+            <button
+              type="button"
+              onClick={handleQuickCreateCategory}
+              disabled={!newBarCatName.trim() || barAddingLoading}
+              className="px-2 py-0.5 bg-ink text-white rounded text-xs font-medium hover:bg-ink-soft disabled:opacity-50"
+            >
+              {barAddingLoading ? '...' : 'Add'}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setIsBarAddingCat(false);
+                setNewBarCatName('');
+              }}
+              className="p-0.5 text-muted hover:text-body"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setIsBarAddingCat(true)}
+            className="px-2.5 py-1.5 rounded-lg border border-dashed border-line text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-50/50 flex items-center gap-1 font-medium transition-all"
+          >
+            <FolderPlus className="w-3.5 h-3.5" /> + New Category
+          </button>
+        )}
       </div>
 
       {/* Table */}
@@ -374,13 +540,28 @@ export const ManageProductsPage: React.FC = () => {
                 <div className="sm:col-span-1">
                   <div className="flex items-center justify-between mb-1">
                     <label className="text-xs text-muted block">Category *</label>
-                    <button
-                      type="button"
-                      onClick={() => setIsAddingCategory(!isAddingCategory)}
-                      className="text-[11px] font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1 transition-colors"
-                    >
-                      <FolderPlus className="w-3 h-3" /> New
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setIsAddingCategory(!isAddingCategory)}
+                        className="text-[11px] font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1 transition-colors"
+                      >
+                        <FolderPlus className="w-3 h-3" /> New
+                      </button>
+                      {formData.categoryId && formData.categoryId !== '__NEW__' && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const cat = categories.find((c) => c.id === formData.categoryId);
+                            if (cat) handleDeleteCategory(cat.id, cat.name);
+                          }}
+                          className="text-[11px] font-semibold text-rose-500 hover:text-rose-700 flex items-center gap-1 transition-colors"
+                          title="Delete selected category"
+                        >
+                          <Trash2 className="w-3 h-3" /> Del
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {isAddingCategory ? (
