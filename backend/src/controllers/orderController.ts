@@ -246,3 +246,33 @@ export const updateOrderStatus = async (req: AuthenticatedRequest, res: Response
     sendError(res, 'Failed to update order status', 500, error);
   }
 };
+
+export const deleteOrder = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+
+    const isDbLive = await checkFirebaseConnection();
+    if (isDbLive) {
+      try {
+        const orderRef = db.collection('orders').doc(id);
+        const orderDoc = await orderRef.get();
+
+        if (orderDoc.exists) {
+          await orderRef.delete();
+        }
+      } catch (err) {
+        console.warn('⚠️ Firestore deleteOrder error:', err);
+      }
+    }
+
+    const memIdx = memoryOrders.findIndex((o) => o.id === id);
+    if (memIdx !== -1) {
+      memoryOrders.splice(memIdx, 1);
+      saveOrdersToDisk();
+    }
+
+    sendSuccess(res, null, 'Order deleted successfully');
+  } catch (error: any) {
+    sendError(res, 'Failed to delete order', 500, error);
+  }
+};

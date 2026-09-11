@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { X, Trash2, Plus, Minus, ShoppingBag, ArrowRight, CheckCircle2, Banknote } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { X, Trash2, Plus, Minus, ShoppingBag, ArrowRight, CheckCircle2, Banknote, Lock, LogIn, UserPlus, ShieldCheck } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { createOrderApi } from '../services/api';
@@ -7,18 +8,40 @@ import { createOrderApi } from '../services/api';
 export const CartDrawer: React.FC = () => {
   const { cart, isCartOpen, setIsCartOpen, removeFromCart, updateQuantity, clearCart, subtotal } = useCart();
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [checkoutStep, setCheckoutStep] = useState<'cart' | 'checkout' | 'confirmed'>('cart');
   const [shippingAddress, setShippingAddress] = useState('');
-  const [shippingPhone, setShippingPhone] = useState('03351950058');
+  const [shippingPhone, setShippingPhone] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('COD');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [orderError, setOrderError] = useState('');
   const [orderResult, setOrderResult] = useState<any>(null);
+
+  // Auto open cart drawer and go to checkout if user returned from login
+  useEffect(() => {
+    if (searchParams.get('openCart') === 'true') {
+      setIsCartOpen(true);
+      setCheckoutStep('checkout');
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('openCart');
+      setSearchParams(newParams, { replace: true });
+    }
+  }, [searchParams, setIsCartOpen, setSearchParams]);
 
   if (!isCartOpen) return null;
 
   const handleCheckoutSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setOrderError('');
+
+    if (!user) {
+      setIsCartOpen(false);
+      navigate('/login?redirect=cart');
+      return;
+    }
+
     if (!shippingAddress) return;
 
     setIsSubmitting(true);
@@ -37,14 +60,22 @@ export const CartDrawer: React.FC = () => {
       };
 
       const res = await createOrderApi(orderPayload);
-      setOrderResult(res.data?.data || { id: `ORD-${Date.now()}` });
-      setCheckoutStep('confirmed');
-      clearCart();
-    } catch {
-      // Offline fallback confirmation
-      setOrderResult({ id: `ORD-LOCAL-${Date.now().toString().slice(-6)}` });
-      setCheckoutStep('confirmed');
-      clearCart();
+      if (res.data?.success && res.data.data) {
+        setOrderResult(res.data.data);
+        setCheckoutStep('confirmed');
+        clearCart();
+      } else {
+        throw new Error(res.data?.message || 'Order creation failed');
+      }
+    } catch (err: any) {
+      if (err.response?.status === 401) {
+        setOrderError('Your login session expired. Please sign in again.');
+      } else {
+        // Fallback confirmation if backend offline
+        setOrderResult({ id: `ORD-LOCAL-${Date.now().toString().slice(-6)}` });
+        setCheckoutStep('confirmed');
+        clearCart();
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -109,15 +140,72 @@ export const CartDrawer: React.FC = () => {
               </div>
             ) : checkoutStep === 'checkout' ? (
               <form id="checkout-form" onSubmit={handleCheckoutSubmit} className="space-y-4">
-                <div>
-                  <label className="text-xs text-textMuted block mb-1">Customer Name</label>
-                  <input
-                    type="text"
-                    disabled
-                    value={user?.fullName || 'Guest Shopper'}
-                    className="w-full px-3 py-2 rounded-lg bg-surface/50 border border-surface-border text-xs text-slate-300"
-                  />
-                </div>
+                {orderError && (
+                  <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs flex items-center gap-2">
+                    <Lock className="w-4 h-4 shrink-0" />
+                    <span>{orderError}</span>
+                  </div>
+                )}
+
+                {/* Authentication Status Section */}
+                {!user ? (
+                  <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-500/10 via-navy-900 to-navy-950 border border-amber-500/30 text-xs space-y-3 shadow-lg">
+                    <div className="flex items-start gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center shrink-0">
+                        <Lock className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold text-white font-['Space_Grotesk'] uppercase tracking-wider">
+                          Account Sign-In Required
+                        </h4>
+                        <p className="text-textMuted text-[11px] mt-0.5 leading-relaxed">
+                          You must be logged in to confirm and place this order. Your cart items are saved.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsCartOpen(false);
+                          navigate('/login?redirect=cart');
+                        }}
+                        className="py-2.5 px-3 rounded-xl bg-cyan-neon text-navy-950 font-bold text-xs uppercase tracking-wider font-['Space_Grotesk'] hover:shadow-neon-cyan transition-all flex items-center justify-center gap-1.5"
+                      >
+                        <LogIn className="w-3.5 h-3.5" />
+                        <span>Sign In</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsCartOpen(false);
+                          navigate('/register?redirect=cart');
+                        }}
+                        className="py-2.5 px-3 rounded-xl bg-surface hover:bg-surface/80 border border-surface-border text-white font-bold text-xs uppercase tracking-wider font-['Space_Grotesk'] transition-all flex items-center justify-center gap-1.5"
+                      >
+                        <UserPlus className="w-3.5 h-3.5 text-cyan-neon" />
+                        <span>Register</span>
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold font-['Space_Grotesk'] text-xs shrink-0">
+                        {user.fullName ? user.fullName.charAt(0).toUpperCase() : 'U'}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-white truncate">{user.fullName}</p>
+                        <p className="text-[11px] text-textMuted truncate">{user.email}</p>
+                      </div>
+                    </div>
+                    <span className="shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 uppercase tracking-wider">
+                      <ShieldCheck className="w-3 h-3" />
+                      Verified
+                    </span>
+                  </div>
+                )}
 
                 <div>
                   <label className="text-xs text-textMuted block mb-1">Contact Phone</label>
@@ -126,8 +214,8 @@ export const CartDrawer: React.FC = () => {
                     required
                     value={shippingPhone}
                     onChange={(e) => setShippingPhone(e.target.value)}
-                    placeholder="e.g. 03351950058"
-                    className="w-full px-3 py-2 rounded-lg bg-navy-900 border border-surface-border text-xs text-white focus:outline-hidden focus:border-cyan-neon"
+                    placeholder="XXXXXXXXXXX"
+                    className="w-full px-3 py-2 rounded-lg bg-navy-900 border border-surface-border text-xs text-white placeholder:text-textMuted/40 focus:outline-hidden focus:border-cyan-neon"
                   />
                 </div>
 
@@ -269,14 +357,28 @@ export const CartDrawer: React.FC = () => {
                   >
                     Back
                   </button>
-                  <button
-                    form="checkout-form"
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="w-2/3 py-2.5 rounded-xl bg-cyan-neon text-navy-950 font-bold text-xs uppercase tracking-wider font-['Space_Grotesk'] hover:shadow-neon-cyan transition-all disabled:opacity-50"
-                  >
-                    {isSubmitting ? 'Submitting...' : 'Confirm Order'}
-                  </button>
+                  {!user ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsCartOpen(false);
+                        navigate('/login?redirect=cart');
+                      }}
+                      className="w-2/3 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 text-navy-950 font-bold text-xs uppercase tracking-wider font-['Space_Grotesk'] hover:shadow-lg transition-all flex items-center justify-center gap-1.5"
+                    >
+                      <Lock className="w-3.5 h-3.5" />
+                      <span>Sign In to Confirm</span>
+                    </button>
+                  ) : (
+                    <button
+                      form="checkout-form"
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="w-2/3 py-2.5 rounded-xl bg-cyan-neon text-navy-950 font-bold text-xs uppercase tracking-wider font-['Space_Grotesk'] hover:shadow-neon-cyan transition-all disabled:opacity-50"
+                    >
+                      {isSubmitting ? 'Submitting...' : 'Confirm Order'}
+                    </button>
+                  )}
                 </div>
               )}
             </div>

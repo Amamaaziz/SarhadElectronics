@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { RefreshCw, Package, Phone, Mail, MapPin, CheckCircle, Clock, Truck, AlertCircle, XCircle } from 'lucide-react';
-import { getAdminOrders, updateAdminOrderStatus } from '../services/adminApi';
+import { RefreshCw, Package, Phone, Mail, MapPin, CheckCircle, Clock, Truck, AlertCircle, XCircle, Trash2 } from 'lucide-react';
+import { getAdminOrders, updateAdminOrderStatus, deleteAdminOrder } from '../services/adminApi';
 import { AdminOrder } from '../types';
 
 const statusConfig: Record<string, { label: string; style: string; icon: any }> = {
@@ -14,6 +14,7 @@ const statusConfig: Record<string, { label: string; style: string; icon: any }> 
 export const OrdersPage: React.FC = () => {
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>('ALL');
 
   const loadOrders = async () => {
@@ -39,6 +40,22 @@ export const OrdersPage: React.FC = () => {
       // fall through to optimistic state
     }
     setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, status: newStatus as any } : o)));
+  };
+
+  const handleDeleteOrder = async (orderId: string, orderDisplayCode: string) => {
+    if (!window.confirm(`Are you sure you want to permanently delete order ${orderDisplayCode}? This action cannot be undone.`)) {
+      return;
+    }
+
+    setDeletingId(orderId);
+    try {
+      await deleteAdminOrder(orderId);
+      setOrders((prev) => prev.filter((o) => o.id !== orderId));
+    } catch {
+      setOrders((prev) => prev.filter((o) => o.id !== orderId));
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   const filteredOrders = filterStatus === 'ALL'
@@ -208,18 +225,18 @@ export const OrdersPage: React.FC = () => {
                       </span>
                     </td>
 
-                    {/* Status selector */}
+                    {/* Status selector & Delete button */}
                     <td className="py-4 px-6 align-top space-y-2">
                       <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${conf.style}`}>
                         <StatusIcon className="w-3 h-3 shrink-0" />
                         <span>{conf.label}</span>
                       </div>
 
-                      <div>
+                      <div className="flex items-center gap-1.5">
                         <select
                           value={order.status}
                           onChange={(e) => handleStatusUpdate(order.id, e.target.value)}
-                          className="w-full px-2.5 py-1.5 rounded-lg bg-page border border-line text-xs text-body focus:outline-hidden focus:border-body cursor-pointer transition-all"
+                          className="flex-1 min-w-[105px] px-2.5 py-1.5 rounded-lg bg-page border border-line text-xs text-body focus:outline-hidden focus:border-body cursor-pointer transition-all"
                         >
                           <option value="PENDING">Pending</option>
                           <option value="PROCESSING">Processing</option>
@@ -227,6 +244,21 @@ export const OrdersPage: React.FC = () => {
                           <option value="DELIVERED">Delivered</option>
                           <option value="CANCELLED">Cancelled</option>
                         </select>
+
+                        <button
+                          type="button"
+                          disabled={deletingId === order.id}
+                          onClick={() => {
+                            const displayCode = order.id.startsWith('ord-') || order.id.length < 15
+                              ? order.id
+                              : `#${order.id.slice(-8).toUpperCase()}`;
+                            handleDeleteOrder(order.id, displayCode);
+                          }}
+                          title="Permanently Delete Order"
+                          className="p-2 rounded-lg text-muted hover:text-rose-600 hover:bg-rose-50 border border-line/60 hover:border-rose-200 transition-all cursor-pointer disabled:opacity-50 shrink-0"
+                        >
+                          <Trash2 className={`w-3.5 h-3.5 ${deletingId === order.id ? 'animate-spin' : ''}`} />
+                        </button>
                       </div>
                     </td>
                   </tr>

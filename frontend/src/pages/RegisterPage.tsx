@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { UserPlus, User, Lock, Mail, AlertCircle, CheckCircle2, Zap } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -12,6 +12,8 @@ export const RegisterPage: React.FC = () => {
   const [error, setError] = useState('');
   const { register, isLoading } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectParam = searchParams.get('redirect');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,7 +31,13 @@ export const RegisterPage: React.FC = () => {
 
     const res = await register(fullName, email, password, confirmPassword);
     if (res.success) {
-      navigate('/');
+      if (redirectParam === 'cart') {
+        navigate('/?openCart=true');
+      } else if (redirectParam) {
+        navigate(redirectParam);
+      } else {
+        navigate('/');
+      }
     } else {
       setError(res.message || 'Registration failed');
     }
@@ -154,7 +162,10 @@ export const RegisterPage: React.FC = () => {
         {/* Footer Link */}
         <p className="text-center text-xs text-textMuted">
           Already have an account?{' '}
-          <Link to="/login" className="text-cyan-neon font-semibold hover:underline">
+          <Link
+            to={redirectParam ? `/login?redirect=${encodeURIComponent(redirectParam)}` : '/login'}
+            className="text-cyan-neon font-semibold hover:underline"
+          >
             Sign In Here
           </Link>
         </p>

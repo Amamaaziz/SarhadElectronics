@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Zap, Sparkles, Volume2 } from 'lucide-react';
+import { ArrowRight, Zap, Volume2 } from 'lucide-react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { Product } from '../types';
 import { fetchProductsApi } from '../services/api';
@@ -78,13 +78,6 @@ export const HomePage: React.FC = () => {
               animate="visible"
               className="lg:col-span-7 space-y-6 text-center lg:text-left"
             >
-              <motion.div variants={itemVariants}>
-                <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-surface/70 border border-[rgba(0,229,255,0.15)] text-[#00E5FF] text-xs font-semibold uppercase tracking-wider backdrop-blur-md shadow-neon-cyan">
-                  <Sparkles className="w-3.5 h-3.5 animate-spin-slow" />
-                  Premium Selection 2026
-                </span>
-              </motion.div>
-
               <motion.h1
                 variants={itemVariants}
                 className="text-3xl sm:text-5xl lg:text-[64px] xl:text-[70px] 2xl:text-[72px] font-[800] font-['Space_Grotesk'] tracking-[-0.03em] text-white leading-[1.08]"

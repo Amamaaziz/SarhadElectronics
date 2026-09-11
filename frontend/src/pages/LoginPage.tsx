@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { LogIn, Lock, Mail, AlertCircle, Zap } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -10,6 +10,8 @@ export const LoginPage: React.FC = () => {
   const [error, setError] = useState('');
   const { login, isLoading } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectParam = searchParams.get('redirect');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -17,7 +19,13 @@ export const LoginPage: React.FC = () => {
 
     const res = await login(email, password);
     if (res.success) {
-      navigate('/');
+      if (redirectParam === 'cart') {
+        navigate('/?openCart=true');
+      } else if (redirectParam) {
+        navigate(redirectParam);
+      } else {
+        navigate('/');
+      }
     } else {
       setError(res.message || 'Invalid credentials');
     }
@@ -113,7 +121,10 @@ export const LoginPage: React.FC = () => {
         {/* Footer Link */}
         <p className="text-center text-xs text-textMuted">
           Don't have an account yet?{' '}
-          <Link to="/register" className="text-cyan-neon font-semibold hover:underline">
+          <Link
+            to={redirectParam ? `/register?redirect=${encodeURIComponent(redirectParam)}` : '/register'}
+            className="text-cyan-neon font-semibold hover:underline"
+          >
             Create an Account
           </Link>
         </p>

@@ -112,6 +112,10 @@ export const updateAdminOrderStatus = async (id: string, status: string) => {
   return adminApi.patch(`/orders/${id}/status`, { status });
 };
 
+export const deleteAdminOrder = async (id: string) => {
+  return adminApi.delete(`/orders/${id}`);
+};
+
 export const getAdminMessages = async (): Promise<AdminContactMessage[]> => {
   try {
     const res = await adminApi.get('/contact');

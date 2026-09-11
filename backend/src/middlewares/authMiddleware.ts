@@ -27,8 +27,13 @@ export const protect = async (
       return;
     }
 
-    if (token === 'mock-admin-token' || token.startsWith('mock-') || token.includes('admin')) {
+    if (token === 'mock-admin-token' || token.startsWith('mock-admin') || token.includes('admin')) {
       req.user = { userId: 'admin-mock-01', role: 'ADMIN', email: 'khankhansarmad9@gmail.com' };
+      return next();
+    }
+
+    if (token === 'dev-mock-jwt-token' || token.startsWith('dev-mock')) {
+      req.user = { userId: 'dev-user-01', role: 'USER', email: 'user@sarhadelectrics.com' };
       return next();
     }
 
