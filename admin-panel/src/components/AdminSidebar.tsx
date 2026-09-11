@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Package, ShoppingCart, Globe, LogOut } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingCart, Mail, Globe, LogOut } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
 
 export const AdminSidebar: React.FC = () => {
@@ -10,6 +10,7 @@ export const AdminSidebar: React.FC = () => {
     { name: 'Dashboard', path: '/', icon: LayoutDashboard },
     { name: 'Products', path: '/products', icon: Package },
     { name: 'Orders', path: '/orders', icon: ShoppingCart },
+    { name: 'Messages', path: '/messages', icon: Mail },
   ];
 
   return (

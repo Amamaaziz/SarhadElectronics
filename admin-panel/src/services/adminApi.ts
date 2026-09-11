@@ -8,7 +8,7 @@ export const adminApi = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 8000,
+  timeout: 30000,
 });
 
 adminApi.interceptors.request.use((config) => {
@@ -24,6 +24,7 @@ adminApi.interceptors.response.use(
   (error) => {
     if (error.response && error.response.status === 401) {
       localStorage.removeItem('sarhad_admin_token');
+      localStorage.removeItem('sarhad_admin_user');
     }
     return Promise.reject(error);
   }
@@ -118,4 +119,12 @@ export const getAdminMessages = async (): Promise<AdminContactMessage[]> => {
   } catch {
     return fallbackAdminMessages;
   }
+};
+
+export const updateAdminMessageStatus = async (id: string, status: string) => {
+  return adminApi.patch(`/contact/${id}/status`, { status });
+};
+
+export const deleteAdminMessage = async (id: string) => {
+  return adminApi.delete(`/contact/${id}`);
 };

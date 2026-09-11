@@ -108,33 +108,47 @@ export const OrdersPage: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
-              {filteredOrders.map((order) => {
-                const conf = statusConfig[order.status] || {
-                  label: order.status,
-                  style: 'bg-slate-100 text-slate-700 border-slate-200',
-                  icon: AlertCircle,
-                };
-                const StatusIcon = conf.icon;
+              {loading ? (
+                Array.from({ length: 6 }).map((_, i) => (
+                  <tr key={i} className="animate-pulse">
+                    <td className="py-4 px-6"><div className="h-4 w-20 bg-page rounded mb-1" /><div className="h-3 w-28 bg-page rounded" /></td>
+                    <td className="py-4 px-6"><div className="h-4 w-28 bg-page rounded mb-1" /><div className="h-3 w-20 bg-page rounded" /></td>
+                    <td className="py-4 px-6"><div className="h-4 w-40 bg-page rounded" /></td>
+                    <td className="py-4 px-6"><div className="h-8 w-36 bg-page rounded-lg" /></td>
+                    <td className="py-4 px-6"><div className="h-4 w-20 bg-page rounded mb-1" /><div className="h-3 w-12 bg-page rounded" /></td>
+                    <td className="py-4 px-6"><div className="h-6 w-24 bg-page rounded-full mb-1" /><div className="h-7 w-24 bg-page rounded-lg" /></td>
+                  </tr>
+                ))
+              ) : (
+                filteredOrders.map((order) => {
+                  const conf = statusConfig[order.status] || {
+                    label: order.status || 'PENDING',
+                    style: 'bg-slate-100 text-slate-700 border-slate-200',
+                    icon: AlertCircle,
+                  };
+                  const StatusIcon = conf.icon;
 
-                return (
-                  <tr key={order.id} className="hover:bg-page/40 transition-colors">
-                    {/* Order ID & Date */}
-                    <td className="py-4 px-6 align-top">
-                      <span className="font-mono text-xs font-bold text-heading block">
-                        {order.id.startsWith('ord-') || order.id.length < 15
-                          ? order.id
-                          : `#${order.id.slice(-8).toUpperCase()}`}
-                      </span>
-                      <span className="text-[11px] text-muted block mt-0.5">
-                        {new Date(order.createdAt).toLocaleString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </span>
-                    </td>
+                  return (
+                    <tr key={order.id} className="hover:bg-page/40 transition-colors">
+                      {/* Order ID & Date */}
+                      <td className="py-4 px-6 align-top">
+                        <span className="font-mono text-xs font-bold text-heading block">
+                          {order.id.startsWith('ord-') || order.id.length < 15
+                            ? order.id
+                            : `#${order.id.slice(-8).toUpperCase()}`}
+                        </span>
+                        <span className="text-[11px] text-muted block mt-0.5">
+                          {order.createdAt
+                            ? new Date(order.createdAt).toLocaleString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })
+                            : '—'}
+                        </span>
+                      </td>
 
                     {/* Customer */}
                     <td className="py-4 px-6 align-top text-xs space-y-1">
@@ -217,7 +231,7 @@ export const OrdersPage: React.FC = () => {
                     </td>
                   </tr>
                 );
-              })}
+              }))}
 
               {!loading && filteredOrders.length === 0 && (
                 <tr>

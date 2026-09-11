@@ -46,19 +46,29 @@ export const DashboardPage: React.FC = () => {
     <div className="px-10 pb-10 pt-6 space-y-8">
       {/* Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        {stats.map((s) => (
-          <div
-            key={s.label}
-            className="p-6 rounded-card bg-card border border-line shadow-card"
-          >
-            <div className="text-xs font-semibold text-muted tracking-wide">
-              {s.label.toUpperCase()}
-            </div>
-            <div className="text-3xl font-bold text-body mt-3">
-              {loading ? '—' : s.value}
-            </div>
-          </div>
-        ))}
+        {loading
+          ? Array.from({ length: 4 }).map((_, i) => (
+              <div
+                key={i}
+                className="p-6 rounded-card bg-card border border-line shadow-card animate-pulse space-y-3"
+              >
+                <div className="h-3 w-20 bg-page rounded" />
+                <div className="h-8 w-32 bg-page rounded" />
+              </div>
+            ))
+          : stats.map((s) => (
+              <div
+                key={s.label}
+                className="p-6 rounded-card bg-card border border-line shadow-card transition-all"
+              >
+                <div className="text-xs font-semibold text-muted tracking-wide">
+                  {s.label.toUpperCase()}
+                </div>
+                <div className="text-3xl font-bold text-body mt-3">
+                  {s.value}
+                </div>
+              </div>
+            ))}
       </div>
 
       {/* Latest Orders */}
@@ -70,7 +80,7 @@ export const DashboardPage: React.FC = () => {
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead>
-              <tr className="border-y border-line text-body">
+              <tr className="border-y border-line text-body text-xs">
                 <th className="py-3 px-7 font-semibold">ID</th>
                 <th className="py-3 px-7 font-semibold">Shipping To</th>
                 <th className="py-3 px-7 font-semibold">Amount</th>
@@ -79,27 +89,47 @@ export const DashboardPage: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
-              {orders.slice(0, 5).map((order) => (
-                <tr key={order.id}>
-                  <td className="py-4 px-7 text-body">#{order.id.replace(/\D/g, '') || order.id}</td>
-                  <td className="py-4 px-7 text-body max-w-[220px] truncate">
-                    {order.shippingAddress}
-                  </td>
-                  <td className="py-4 px-7 text-body">Rs.{Number(order.totalAmount).toFixed(2)}</td>
-                  <td className="py-4 px-7">
-                    <span className="px-3 py-1 rounded-full bg-ink text-white text-xs">
-                      {order.status.toLowerCase()}
-                    </span>
-                  </td>
-                  <td className="py-4 px-7 text-muted">
-                    {new Date(order.createdAt).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric',
-                    })}
-                  </td>
-                </tr>
-              ))}
+              {loading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={i} className="animate-pulse">
+                    <td className="py-4 px-7"><div className="h-4 w-12 bg-page rounded" /></td>
+                    <td className="py-4 px-7"><div className="h-4 w-36 bg-page rounded" /></td>
+                    <td className="py-4 px-7"><div className="h-4 w-20 bg-page rounded" /></td>
+                    <td className="py-4 px-7"><div className="h-5 w-16 bg-page rounded-full" /></td>
+                    <td className="py-4 px-7"><div className="h-4 w-24 bg-page rounded" /></td>
+                  </tr>
+                ))
+              ) : (
+                orders.slice(0, 5).map((order) => (
+                  <tr key={order.id} className="hover:bg-page/40 transition-colors">
+                    <td className="py-4 px-7 font-mono font-medium text-body">
+                      {order.id.startsWith('ord-') || order.id.length < 15
+                        ? order.id
+                        : `#${order.id.slice(-6).toUpperCase()}`}
+                    </td>
+                    <td className="py-4 px-7 text-body max-w-[220px] truncate">
+                      {order.shippingAddress || 'Peshawar, Pakistan'}
+                    </td>
+                    <td className="py-4 px-7 font-semibold text-body">
+                      Rs.{Number(order.totalAmount || 0).toLocaleString()}
+                    </td>
+                    <td className="py-4 px-7">
+                      <span className="px-3 py-1 rounded-full bg-ink text-white text-xs capitalize font-medium">
+                        {(order.status || 'PENDING').toLowerCase()}
+                      </span>
+                    </td>
+                    <td className="py-4 px-7 text-muted">
+                      {order.createdAt
+                        ? new Date(order.createdAt).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })
+                        : '—'}
+                    </td>
+                  </tr>
+                ))
+              )}
               {!loading && orders.length === 0 && (
                 <tr>
                   <td colSpan={5} className="py-8 px-7 text-center text-muted">

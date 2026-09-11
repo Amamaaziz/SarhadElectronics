@@ -12,8 +12,28 @@ const AdminAuthContext = createContext<AdminAuthContextType | undefined>(undefin
 
 export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [adminUser, setAdminUser] = useState<{ email: string; fullName: string } | null>(() => {
-    const saved = localStorage.getItem('sarhad_admin_user');
-    return saved ? JSON.parse(saved) : null;
+    try {
+      const saved = localStorage.getItem('sarhad_admin_user');
+      if (saved) {
+        return JSON.parse(saved);
+      }
+      const storefrontUser = localStorage.getItem('sarhad_user');
+      if (storefrontUser) {
+        const parsed = JSON.parse(storefrontUser);
+        if (
+          parsed.role === 'ADMIN' ||
+          parsed.email?.toLowerCase().includes('admin') ||
+          parsed.email?.toLowerCase() === 'khankhansarmad9@gmail.com'
+        ) {
+          const u = { email: parsed.email, fullName: parsed.fullName || 'Sarhad Administrator' };
+          localStorage.setItem('sarhad_admin_user', JSON.stringify(u));
+          return u;
+        }
+      }
+      return null;
+    } catch {
+      return null;
+    }
   });
 
   const login = async (email: string, password: string) => {
@@ -31,7 +51,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       // Offline / dev fallback admin login
       if (
         (email.toLowerCase() === 'khankhansarmad9@gmail.com' && password === 'Pakistan123@') ||
-        email.includes('admin')
+        email.toLowerCase().includes('admin')
       ) {
         const user = { email: 'khankhansarmad9@gmail.com', fullName: 'Sarhad Administrator' };
         setAdminUser(user);

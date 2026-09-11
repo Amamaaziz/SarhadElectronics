@@ -2,3 +2,5 @@
 .env.example
 node_modules
 serviceAccountKey.json
+scripts/importFromCsv.ts
+scripts/cleanCategories.ts

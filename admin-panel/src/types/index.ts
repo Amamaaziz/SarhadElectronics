@@ -52,7 +52,7 @@ export interface AdminContactMessage {
   email: string;
   subject: string;
   message: string;
-  status: 'UNREAD' | 'READ' | 'REPLIED';
+  status: 'UNREAD' | 'READ' | 'REPLIED' | 'RESOLVED';
   createdAt: string;
 }
 

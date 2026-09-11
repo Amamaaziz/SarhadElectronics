@@ -45,25 +45,31 @@ export const checkDbConnection = async (): Promise<boolean> => {
 };
 
 export const getProductsFromStore = async (options: ProductQueryOptions) => {
-  const isDbLive = await checkFirebaseConnection();
-
   let products: any[] = [];
 
-  if (isDbLive) {
-    try {
-      let query: any = db.collection('products');
-      if (options.featured !== undefined) {
-        query = query.where('featured', '==', options.featured);
+  if (memoryProducts.length > 0) {
+    products = [...memoryProducts];
+  } else {
+    const isDbLive = await checkFirebaseConnection();
+    if (isDbLive) {
+      try {
+        let query: any = db.collection('products');
+        if (options.featured !== undefined) {
+          query = query.where('featured', '==', options.featured);
+        }
+        const snapshot = await query.get();
+        products = snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
+        if (products.length > 0) {
+          memoryProducts = products;
+          saveProductsToDisk();
+        }
+      } catch (e) {
+        console.warn('⚠️ Firestore query error, falling back to local disk storage:', e);
+        products = [...memoryProducts];
       }
-
-      const snapshot = await query.get();
-      products = snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
-    } catch (e) {
-      console.warn('⚠️ Firestore query error, falling back to local disk storage:', e);
+    } else {
       products = [...memoryProducts];
     }
-  } else {
-    products = [...memoryProducts];
   }
 
   // Filter by category
@@ -89,9 +95,9 @@ export const getProductsFromStore = async (options: ProductQueryOptions) => {
     );
   }
 
-  // Filter by featured if not filtered by firestore query
-  if (options.featured !== undefined && !isDbLive) {
-    products = products.filter((p) => p.featured === options.featured);
+  // Filter by featured if requested
+  if (options.featured !== undefined) {
+    products = products.filter((p) => Boolean(p.featured) === Boolean(options.featured));
   }
 
   // Sort
@@ -138,17 +144,31 @@ export const getProductByIdFromStore = async (id: string) => {
 
 export const getCategoriesFromStore = async () => {
   const isDbLive = await checkFirebaseConnection();
+  let categories: any[] = [];
   if (isDbLive) {
     try {
       const snapshot = await db.collection('categories').orderBy('name', 'asc').get();
       if (!snapshot.empty) {
-        return snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
+        categories = snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
       }
     } catch {
-      // Fallback
+      categories = [...memoryCategories];
+    }
+  } else {
+    categories = [...memoryCategories];
+  }
+
+  // Deduplicate categories by normalized name to guarantee single entry
+  const seen = new Set<string>();
+  const deduped: any[] = [];
+  for (const cat of categories) {
+    const key = (cat.name || '').trim().toLowerCase();
+    if (key && !seen.has(key)) {
+      seen.add(key);
+      deduped.push(cat);
     }
   }
-  return memoryCategories;
+  return deduped.length > 0 ? deduped : initialCategories;
 };
 
 export const createProductInStore = async (data: any) => {
@@ -168,7 +188,7 @@ export const createProductInStore = async (data: any) => {
 
   if (isDbLive) {
     try {
-      // 1. Resolve or auto-create category in Firestore
+      // 1. Resolve category in Firestore without creating duplicate entries
       let category: any = null;
       if (data.categoryId) {
         const catDoc = await db.collection('categories').doc(data.categoryId).get();
@@ -183,28 +203,24 @@ export const createProductInStore = async (data: any) => {
       }
 
       if (!category && data.categoryName) {
-        const catSnap = await db
-          .collection('categories')
-          .where('name', '==', data.categoryName.trim())
-          .limit(1)
-          .get();
-        if (!catSnap.empty) {
-          category = { id: catSnap.docs[0].id, ...catSnap.docs[0].data() };
+        const targetName = data.categoryName.trim();
+        const allCatsSnap = await db.collection('categories').get();
+        const found = allCatsSnap.docs.find(
+          (d: any) => (d.data().name || '').trim().toLowerCase() === targetName.toLowerCase()
+        );
+        if (found) {
+          category = { id: found.id, ...found.data() };
         }
       }
 
+      // Default fallback to first existing category (cat-01 or existing)
       if (!category) {
-        const catName = data.categoryName || 'General Electronics';
-        const catSlug = (catName.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'general') + '-' + Date.now().toString().slice(-4);
-        const catRef = db.collection('categories').doc();
-        category = {
-          id: catRef.id,
-          name: catName,
-          slug: catSlug,
-          description: `Products under ${catName}`,
-          createdAt: new Date().toISOString(),
-        };
-        await catRef.set(category);
+        const defDoc = await db.collection('categories').doc('cat-01').get();
+        if (defDoc.exists) {
+          category = { id: defDoc.id, ...defDoc.data() };
+        } else {
+          category = { id: 'cat-01', name: 'Smart Gadgets', slug: 'smart-gadgets' };
+        }
       }
 
       const prodRef = db.collection('products').doc();

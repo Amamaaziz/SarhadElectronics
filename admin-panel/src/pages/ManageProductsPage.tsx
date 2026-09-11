@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Plus, Trash2, Pencil, Search, X, FolderPlus, Check, AlertCircle, UploadCloud, Loader2, Image as ImageIcon, Link as LinkIcon } from 'lucide-react';
+import { Plus, Trash2, Pencil, Search, X, FolderPlus, Check, AlertCircle, UploadCloud, Loader2, Image as ImageIcon, Link as LinkIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import {
   getAdminProducts,
   getAdminCategories,
@@ -31,8 +31,10 @@ export const ManageProductsPage: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 20;
 
   const [formData, setFormData] = useState(emptyForm);
 
@@ -356,6 +358,27 @@ export const ManageProductsPage: React.FC = () => {
     return matchesSearch && matchesCategory;
   });
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const safePage = Math.min(currentPage, totalPages);
+  const paginated = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
+
+  const handleCategorySelect = (catId: string) => {
+    setSelectedCategory(catId);
+    setCurrentPage(1);
+  };
+
+  const handleSearchChange = (val: string) => {
+    setSearch(val);
+    setCurrentPage(1);
+  };
+
+  const uniqueCategories = categories.filter(
+    (c, index, self) =>
+      c.slug !== 'all-items' &&
+      c.name.toLowerCase() !== 'all items' &&
+      index === self.findIndex((t) => (t.name || '').trim().toLowerCase() === (c.name || '').trim().toLowerCase())
+  );
+
   return (
     <div className="px-10 pb-10 pt-6 space-y-6">
       {/* Control bar */}
@@ -364,7 +387,7 @@ export const ManageProductsPage: React.FC = () => {
           <input
             type="text"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
             placeholder="Search inventory by title or brand..."
             className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-card border border-line text-sm text-body placeholder:text-muted focus:outline-hidden focus:border-body"
           />
@@ -386,7 +409,7 @@ export const ManageProductsPage: React.FC = () => {
         </div>
 
         <button
-          onClick={() => setSelectedCategory('all')}
+          onClick={() => handleCategorySelect('all')}
           className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
             selectedCategory === 'all'
               ? 'bg-ink text-white shadow-xs'
@@ -396,47 +419,45 @@ export const ManageProductsPage: React.FC = () => {
           All Items ({products.length})
         </button>
 
-        {categories
-          .filter((c) => c.slug !== 'all-items' && c.name.toLowerCase() !== 'all items')
-          .map((cat) => {
-            const count = products.filter(
-              (p) =>
-                p.categoryId === cat.id ||
-                p.categoryName?.toLowerCase() === cat.name.toLowerCase()
-            ).length;
-            const isSelected = selectedCategory === cat.id;
+        {uniqueCategories.map((cat) => {
+          const count = products.filter(
+            (p) =>
+              p.categoryId === cat.id ||
+              p.categoryName?.toLowerCase() === cat.name.toLowerCase()
+          ).length;
+          const isSelected = selectedCategory === cat.id;
 
-            return (
-              <div
-                key={cat.id}
-                onClick={() => setSelectedCategory(isSelected ? 'all' : cat.id)}
-                className={`group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-all ${
-                  isSelected
-                    ? 'bg-ink text-white shadow-xs'
-                    : 'bg-page text-muted hover:text-body border border-line'
+          return (
+            <div
+              key={cat.id}
+              onClick={() => handleCategorySelect(isSelected ? 'all' : cat.id)}
+              className={`group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-all ${
+                isSelected
+                  ? 'bg-ink text-white shadow-xs'
+                  : 'bg-page text-muted hover:text-body border border-line'
+              }`}
+            >
+              <span>{cat.name}</span>
+              <span
+                className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                  isSelected ? 'bg-white/20 text-white' : 'bg-line text-muted'
                 }`}
               >
-                <span>{cat.name}</span>
-                <span
-                  className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                    isSelected ? 'bg-white/20 text-white' : 'bg-line text-muted'
-                  }`}
-                >
-                  {count}
-                </span>
-                <button
-                  type="button"
-                  title={`Delete category "${cat.name}"`}
-                  onClick={(e) => handleDeleteCategory(cat.id, cat.name, e)}
-                  className={`p-0.5 rounded transition-all opacity-40 hover:opacity-100 hover:bg-rose-500 hover:text-white ${
-                    isSelected ? 'text-white hover:bg-rose-600' : 'text-rose-500'
-                  }`}
-                >
-                  <Trash2 className="w-3 h-3" />
-                </button>
-              </div>
-            );
-          })}
+                {count}
+              </span>
+              <button
+                type="button"
+                title={`Delete category "${cat.name}"`}
+                onClick={(e) => handleDeleteCategory(cat.id, cat.name, e)}
+                className={`p-0.5 rounded transition-all opacity-40 hover:opacity-100 hover:bg-rose-500 hover:text-white ${
+                  isSelected ? 'text-white hover:bg-rose-600' : 'text-rose-500'
+                }`}
+              >
+                <Trash2 className="w-3 h-3" />
+              </button>
+            </div>
+          );
+        })}
 
         {/* Inline Add Category on Bar */}
         {isBarAddingCat ? (
@@ -500,77 +521,114 @@ export const ManageProductsPage: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
-              {filtered.map((prod) => (
-                <tr key={prod.id} className="hover:bg-page/60">
-                  <td className="py-3.5 px-7">
-                    <div className="flex items-center gap-3">
-                      <img
-                        src={prod.imageUrl}
-                        alt={prod.name}
-                        className="w-10 h-10 object-cover rounded-lg bg-page shrink-0"
-                      />
-                      <div>
-                        <span className="font-semibold text-body block">{prod.name}</span>
-                        <span className="text-xs text-muted">{prod.brand || 'Sarhad'}</span>
+              {loading ? (
+                Array.from({ length: 8 }).map((_, i) => (
+                  <tr key={i} className="animate-pulse">
+                    <td className="py-3.5 px-7">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-page shrink-0" />
+                        <div className="space-y-1.5">
+                          <div className="h-3.5 w-44 bg-page rounded" />
+                          <div className="h-2.5 w-20 bg-page rounded" />
+                        </div>
                       </div>
-                    </div>
-                  </td>
-                  <td className="py-3.5 px-7 text-muted">
-                    {prod.categoryName || 'Smart Tech'}
-                  </td>
-                  <td className="py-3.5 px-7 font-semibold text-body">
-                    Rs.{Number(prod.price).toFixed(2)}
-                  </td>
-                  <td className="py-3.5 px-7">
-                    <span
-                      className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                        prod.stock > 10
-                          ? 'bg-emerald-50 text-emerald-700'
-                          : 'bg-rose-50 text-rose-600'
-                      }`}
-                    >
-                      {prod.stock} units
-                    </span>
-                  </td>
-                  <td className="py-3.5 px-7">
-                    {prod.featured ? (
-                      <span className="px-2.5 py-0.5 rounded border border-line text-[11px] font-semibold text-body">
-                        YES
+                    </td>
+                    <td className="py-3.5 px-7">
+                      <div className="h-3.5 w-24 bg-page rounded" />
+                    </td>
+                    <td className="py-3.5 px-7">
+                      <div className="h-3.5 w-16 bg-page rounded" />
+                    </td>
+                    <td className="py-3.5 px-7">
+                      <div className="h-5 w-16 bg-page rounded-full" />
+                    </td>
+                    <td className="py-3.5 px-7">
+                      <div className="h-3.5 w-8 bg-page rounded" />
+                    </td>
+                    <td className="py-3.5 px-7 text-right">
+                      <div className="h-6 w-14 bg-page rounded ml-auto" />
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                paginated.map((prod) => (
+                  <tr key={prod.id} className="hover:bg-page/60 transition-colors">
+                    <td className="py-3.5 px-7">
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={prod.imageUrl}
+                          alt={prod.name}
+                          loading="lazy"
+                          className="w-10 h-10 object-cover rounded-lg bg-page shrink-0 border border-line"
+                        />
+                        <div className="min-w-0 max-w-[280px]">
+                          <span className="font-semibold text-body block truncate" title={prod.name}>
+                            {prod.name}
+                          </span>
+                          <span className="text-xs text-muted block truncate">
+                            {prod.brand || 'Sarhad'}
+                          </span>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-3.5 px-7 text-muted">
+                      {prod.categoryName || 'Smart Tech'}
+                    </td>
+                    <td className="py-3.5 px-7 font-semibold text-body">
+                      Rs.{Number(prod.price).toFixed(2)}
+                    </td>
+                    <td className="py-3.5 px-7">
+                      <span
+                        className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+                          prod.stock > 10
+                            ? 'bg-emerald-50 text-emerald-700'
+                            : 'bg-rose-50 text-rose-600'
+                        }`}
+                      >
+                        {prod.stock} units
                       </span>
-                    ) : (
-                      <span className="text-muted text-xs">No</span>
-                    )}
-                  </td>
-                  <td className="py-3.5 px-7 text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      <button
-                        onClick={() => openEditModal(prod)}
-                        className="p-1.5 rounded-lg text-muted hover:text-body hover:bg-page"
-                        title="Edit Product"
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(prod.id)}
-                        className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50"
-                        title="Delete Product"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {filtered.length === 0 && (
+                    </td>
+                    <td className="py-3.5 px-7">
+                      {prod.featured ? (
+                        <span className="px-2.5 py-0.5 rounded border border-line text-[11px] font-semibold text-body">
+                          YES
+                        </span>
+                      ) : (
+                        <span className="text-muted text-xs">No</span>
+                      )}
+                    </td>
+                    <td className="py-3.5 px-7 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          onClick={() => openEditModal(prod)}
+                          className="p-1.5 rounded-lg text-muted hover:text-body hover:bg-page transition-colors cursor-pointer"
+                          title="Edit Product"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(prod.id)}
+                          className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 transition-colors cursor-pointer"
+                          title="Delete Product"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+
+              {!loading && filtered.length === 0 && (
                 <tr>
                   <td colSpan={6} className="py-12 px-7 text-center text-muted">
                     {products.length === 0 ? (
                       <div className="space-y-3">
                         <p className="text-sm font-medium text-body">No products in catalog yet.</p>
-                        <p className="text-xs text-muted">Click the "+ Add Product" button above to add your first real product to the website.</p>
+                        <p className="text-xs text-muted">Click the "+ Add Product" button above to add your first product.</p>
                       </div>
                     ) : (
-                      'No products match your search.'
+                      'No products match your search or filter.'
                     )}
                   </td>
                 </tr>
@@ -578,6 +636,61 @@ export const ManageProductsPage: React.FC = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination Controls */}
+        {!loading && filtered.length > pageSize && (
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-7 py-3.5 border-t border-line bg-card text-xs text-muted">
+            <div>
+              Showing <span className="font-semibold text-body">{(safePage - 1) * pageSize + 1}</span>–
+              <span className="font-semibold text-body">
+                {Math.min(safePage * pageSize, filtered.length)}
+              </span> of <span className="font-semibold text-body">{filtered.length}</span> products
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={safePage <= 1}
+                className="p-1.5 rounded-lg border border-line bg-page hover:bg-card text-body disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                title="Previous Page"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+
+              <div className="flex items-center gap-1">
+                {Array.from({ length: Math.min(5, totalPages) }).map((_, idx) => {
+                  let pageNum = idx + 1;
+                  if (totalPages > 5 && safePage > 3) {
+                    pageNum = safePage - 2 + idx;
+                    if (pageNum > totalPages) pageNum = totalPages - 4 + idx;
+                  }
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={`min-w-[28px] h-7 rounded-lg text-xs font-medium transition-all ${
+                        safePage === pageNum
+                          ? 'bg-ink text-white shadow-xs'
+                          : 'bg-page border border-line text-muted hover:text-body hover:bg-card'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <button
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={safePage >= totalPages}
+                className="p-1.5 rounded-lg border border-line bg-page hover:bg-card text-body disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                title="Next Page"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Add / Edit Product Modal */}
@@ -731,7 +844,7 @@ export const ManageProductsPage: React.FC = () => {
                       }}
                       className="w-full px-3 py-2 rounded-lg bg-page border border-line text-sm text-body focus:outline-hidden focus:border-body cursor-pointer"
                     >
-                      {categories.map((cat) => (
+                      {uniqueCategories.map((cat) => (
                         <option key={cat.id} value={cat.id}>
                           {cat.name}
                         </option>
