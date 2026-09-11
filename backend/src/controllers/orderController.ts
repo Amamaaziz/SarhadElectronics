@@ -3,7 +3,7 @@ import { sendSuccess, sendError } from '../utils/apiResponse';
 import { AuthenticatedRequest } from '../middlewares/authMiddleware';
 import { verifyToken } from '../utils/jwt';
 import { db, auth, checkFirebaseConnection } from '../config/firebase';
-import { memoryOrders } from '../services/productService';
+import { memoryOrders, saveOrdersToDisk } from '../services/productService';
 
 export const createOrder = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
@@ -40,80 +40,84 @@ export const createOrder = async (req: AuthenticatedRequest, res: Response): Pro
     const isDbLive = await checkFirebaseConnection();
 
     if (isDbLive) {
-      // 1. Resolve customer info
-      let customerName = 'Guest Customer';
-      let customerEmail = userEmail || `customer_${(shippingPhone || 'guest').replace(/[^0-9]/g, '') || Date.now()}@sarhadelectrics.com`;
+      try {
+        let customerName = 'Guest Customer';
+        let customerEmail = userEmail || `customer_${(shippingPhone || 'guest').replace(/[^0-9]/g, '') || Date.now()}@sarhadelectrics.com`;
 
-      if (userId && userId !== 'guest-user') {
-        const userDoc = await db.collection('users').doc(userId).get();
-        if (userDoc.exists) {
-          const uData = userDoc.data()!;
-          customerName = uData.fullName || customerName;
-          customerEmail = uData.email || customerEmail;
-        }
-      }
-
-      // 2. Validate product items and format orderItems
-      const validItems: any[] = [];
-      for (const item of items) {
-        let prodId = item.productId || item.id;
-        let prodName = item.name || item.productName || 'Electronic Item';
-        let prodPrice = Number(item.price || item.priceAtPurchase || 0);
-        let prodImg = item.imageUrl || item.image || '';
-
-        if (prodId) {
-          const pDoc = await db.collection('products').doc(prodId).get();
-          if (pDoc.exists) {
-            const pData = pDoc.data()!;
-            prodName = pData.name || prodName;
-            prodPrice = Number(pData.price || prodPrice);
-            prodImg = pData.imageUrl || prodImg;
+        if (userId && userId !== 'guest-user') {
+          const userDoc = await db.collection('users').doc(userId).get();
+          if (userDoc.exists) {
+            const uData = userDoc.data()!;
+            customerName = uData.fullName || customerName;
+            customerEmail = uData.email || customerEmail;
           }
         }
 
-        validItems.push({
-          id: `oi-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
-          productId: prodId || `prod-${Date.now()}`,
-          name: prodName,
-          productName: prodName,
-          quantity: Number(item.quantity) || 1,
-          priceAtPurchase: prodPrice,
-          price: prodPrice,
-          imageUrl: prodImg,
-          product: {
-            id: prodId,
+        const validItems: any[] = [];
+        for (const item of items) {
+          let prodId = item.productId || item.id;
+          let prodName = item.name || item.productName || 'Electronic Item';
+          let prodPrice = Number(item.price || item.priceAtPurchase || 0);
+          let prodImg = item.imageUrl || item.image || '';
+
+          if (prodId) {
+            const pDoc = await db.collection('products').doc(prodId).get();
+            if (pDoc.exists) {
+              const pData = pDoc.data()!;
+              prodName = pData.name || prodName;
+              prodPrice = Number(pData.price || prodPrice);
+              prodImg = pData.imageUrl || prodImg;
+            }
+          }
+
+          validItems.push({
+            id: `oi-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+            productId: prodId || `prod-${Date.now()}`,
             name: prodName,
+            productName: prodName,
+            quantity: Number(item.quantity) || 1,
+            priceAtPurchase: prodPrice,
             price: prodPrice,
             imageUrl: prodImg,
+            product: {
+              id: prodId,
+              name: prodName,
+              price: prodPrice,
+              imageUrl: prodImg,
+            },
+          });
+        }
+
+        const orderRef = db.collection('orders').doc();
+        const order = {
+          id: orderRef.id,
+          userId: userId || 'guest-user',
+          totalAmount: Number(totalAmount),
+          shippingAddress,
+          shippingPhone: shippingPhone || '—',
+          paymentMethod: paymentMethod || 'COD',
+          status: 'PENDING',
+          orderItems: validItems,
+          user: {
+            id: userId || 'guest-user',
+            fullName: customerName,
+            email: customerEmail,
           },
-        });
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+
+        await orderRef.set(order);
+        memoryOrders.unshift(order);
+        saveOrdersToDisk();
+        sendSuccess(res, order, 'Order placed successfully', 201);
+        return;
+      } catch (err) {
+        console.warn('⚠️ Firestore createOrder error, saving to disk:', err);
       }
-
-      const orderRef = db.collection('orders').doc();
-      const order = {
-        id: orderRef.id,
-        userId: userId || 'guest-user',
-        totalAmount: Number(totalAmount),
-        shippingAddress,
-        shippingPhone: shippingPhone || '—',
-        paymentMethod: paymentMethod || 'COD',
-        status: 'PENDING',
-        orderItems: validItems,
-        user: {
-          id: userId || 'guest-user',
-          fullName: customerName,
-          email: customerEmail,
-        },
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-
-      await orderRef.set(order);
-      sendSuccess(res, order, 'Order placed successfully', 201);
-      return;
     }
 
-    // Memory fallback
+    // Local persistent storage
     const newOrder = {
       id: `ord-${Date.now()}`,
       userId: userId || 'guest-user',
@@ -148,6 +152,7 @@ export const createOrder = async (req: AuthenticatedRequest, res: Response): Pro
     };
 
     memoryOrders.unshift(newOrder);
+    saveOrdersToDisk();
     sendSuccess(res, newOrder, 'Order placed successfully', 201);
   } catch (error: any) {
     sendError(res, 'Failed to place order', 500, error);
@@ -159,25 +164,28 @@ export const getOrders = async (req: AuthenticatedRequest, res: Response): Promi
     const isDbLive = await checkFirebaseConnection();
 
     if (isDbLive) {
-      const isAdmin = req.user?.role === 'ADMIN';
-      let query: any = db.collection('orders');
+      try {
+        const isAdmin = req.user?.role === 'ADMIN';
+        let query: any = db.collection('orders');
 
-      if (!isAdmin && req.user?.userId) {
-        query = query.where('userId', '==', req.user.userId);
+        if (!isAdmin && req.user?.userId) {
+          query = query.where('userId', '==', req.user.userId);
+        }
+
+        const snapshot = await query.get();
+        let orders = snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
+
+        orders.sort((a: any, b: any) => {
+          const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return timeB - timeA;
+        });
+
+        sendSuccess(res, orders);
+        return;
+      } catch (err) {
+        console.warn('⚠️ Firestore getOrders error, reading from disk:', err);
       }
-
-      const snapshot = await query.get();
-      let orders = snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
-
-      // Sort newest first
-      orders.sort((a: any, b: any) => {
-        const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        return timeB - timeA;
-      });
-
-      sendSuccess(res, orders);
-      return;
     }
 
     sendSuccess(res, memoryOrders);
@@ -199,22 +207,29 @@ export const updateOrderStatus = async (req: AuthenticatedRequest, res: Response
 
     const isDbLive = await checkFirebaseConnection();
     if (isDbLive) {
-      const orderRef = db.collection('orders').doc(id);
-      const orderDoc = await orderRef.get();
+      try {
+        const orderRef = db.collection('orders').doc(id);
+        const orderDoc = await orderRef.get();
 
-      if (!orderDoc.exists) {
-        sendError(res, 'Order not found', 404);
-        return;
+        if (orderDoc.exists) {
+          await orderRef.update({
+            status,
+            updatedAt: new Date().toISOString(),
+          });
+
+          const updatedDoc = await orderRef.get();
+          const updated = { id: updatedDoc.id, ...updatedDoc.data() };
+          const memIdx = memoryOrders.findIndex((o) => o.id === id);
+          if (memIdx !== -1) {
+            memoryOrders[memIdx] = updated;
+            saveOrdersToDisk();
+          }
+          sendSuccess(res, updated, 'Order status updated');
+          return;
+        }
+      } catch (err) {
+        console.warn('⚠️ Firestore updateOrderStatus error:', err);
       }
-
-      await orderRef.update({
-        status,
-        updatedAt: new Date().toISOString(),
-      });
-
-      const updatedDoc = await orderRef.get();
-      sendSuccess(res, { id: updatedDoc.id, ...updatedDoc.data() }, 'Order status updated');
-      return;
     }
 
     const order = memoryOrders.find((o) => o.id === id);
@@ -225,10 +240,9 @@ export const updateOrderStatus = async (req: AuthenticatedRequest, res: Response
 
     order.status = status;
     order.updatedAt = new Date().toISOString();
+    saveOrdersToDisk();
     sendSuccess(res, order, 'Order status updated');
   } catch (error: any) {
     sendError(res, 'Failed to update order status', 500, error);
   }
 };
-
-

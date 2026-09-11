@@ -25,7 +25,7 @@ export const Footer: React.FC = () => {
             {/* Social Icons */}
             <div className="flex items-center gap-4 pt-2">
               <a
-                href="https://facebook.com"
+                href="https://sarhadelectrics.com/index.php#"
                 target="_blank"
                 rel="noreferrer"
                 aria-label="Facebook"

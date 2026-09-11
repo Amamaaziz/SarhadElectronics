@@ -37,5 +37,24 @@ export const uploadToCloudinary = async (
   });
 };
 
+export const uploadUrlToCloudinary = async (
+  imageUrl: string,
+  folder: string = 'sarhad_electrics/products'
+): Promise<string> => {
+  if (!process.env.CLOUDINARY_API_KEY || process.env.CLOUDINARY_API_KEY === 'test_key') {
+    return imageUrl;
+  }
+
+  const result = await cloudinary.uploader.upload(imageUrl, {
+    folder,
+    resource_type: 'image',
+  });
+
+  if (result?.secure_url) {
+    return result.secure_url;
+  }
+  throw new Error('Cloudinary upload failed: No secure URL returned');
+};
+
 export default cloudinary;
 

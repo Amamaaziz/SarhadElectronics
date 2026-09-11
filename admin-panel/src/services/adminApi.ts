@@ -79,6 +79,25 @@ export const deleteAdminProduct = async (id: string) => {
   return adminApi.delete(`/products/${id}`);
 };
 
+export const uploadAdminImage = async (file: File): Promise<string> => {
+  const formData = new FormData();
+  formData.append('image', file);
+  const res = await adminApi.post('/upload', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+    timeout: 30000,
+  });
+  return res.data?.data?.url || res.data?.data?.imageUrl;
+};
+
+export const uploadAdminImageUrl = async (url: string): Promise<string> => {
+  const res = await adminApi.post('/upload/url', { url }, {
+    timeout: 30000,
+  });
+  return res.data?.data?.url || res.data?.data?.imageUrl;
+};
+
 export const getAdminOrders = async (): Promise<AdminOrder[]> => {
   try {
     const res = await adminApi.get('/orders');

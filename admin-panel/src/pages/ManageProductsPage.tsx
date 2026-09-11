@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Plus, Trash2, Pencil, Search, X, FolderPlus, Check, AlertCircle } from 'lucide-react';
+import React, { useEffect, useState, useRef } from 'react';
+import { Plus, Trash2, Pencil, Search, X, FolderPlus, Check, AlertCircle, UploadCloud, Loader2, Image as ImageIcon, Link as LinkIcon } from 'lucide-react';
 import {
   getAdminProducts,
   getAdminCategories,
@@ -8,6 +8,8 @@ import {
   createAdminProduct,
   updateAdminProduct,
   deleteAdminProduct,
+  uploadAdminImage,
+  uploadAdminImageUrl,
 } from '../services/adminApi';
 import { AdminProduct, AdminCategory } from '../types';
 
@@ -33,6 +35,15 @@ export const ManageProductsPage: React.FC = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState(emptyForm);
+
+  // Cloudinary image upload states
+  const [imageUploading, setImageUploading] = useState(false);
+  const [imageUploadError, setImageUploadError] = useState('');
+  const [previewUrl, setPreviewUrl] = useState('');
+  const [isDragging, setIsDragging] = useState(false);
+  const [imageInputMode, setImageInputMode] = useState<'upload' | 'url'>('upload');
+  const [externalUrlInput, setExternalUrlInput] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Category creation states inside modal
   const [isAddingCategory, setIsAddingCategory] = useState(false);
@@ -74,6 +85,11 @@ export const ManageProductsPage: React.FC = () => {
       ...emptyForm,
       categoryId: categories[0]?.id || 'cat-01',
     });
+    setPreviewUrl('');
+    setImageUploadError('');
+    setImageUploading(false);
+    setImageInputMode('upload');
+    setExternalUrlInput('');
     setIsAddingCategory(false);
     setNewCategoryName('');
     setCategorySuccessMsg('');
@@ -93,10 +109,108 @@ export const ManageProductsPage: React.FC = () => {
       featured: prod.featured,
       imageUrl: prod.imageUrl || '',
     });
+    setPreviewUrl(prod.imageUrl || '');
+    setImageUploadError('');
+    setImageUploading(false);
+    setImageInputMode('upload');
+    setExternalUrlInput('');
     setIsAddingCategory(false);
     setNewCategoryName('');
     setCategorySuccessMsg('');
     setIsModalOpen(true);
+  };
+
+  const handleImageFileSelect = async (file: File) => {
+    if (!file) return;
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
+    if (!allowedTypes.includes(file.type.toLowerCase())) {
+      setImageUploadError('Invalid file type. Please upload a JPG, PNG, or WEBP image.');
+      return;
+    }
+
+    const maxSizeBytes = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSizeBytes) {
+      setImageUploadError('File size is too large (max 5MB). Please choose a smaller image.');
+      return;
+    }
+
+    setImageUploadError('');
+    setPreviewUrl(URL.createObjectURL(file));
+    setImageUploading(true);
+
+    try {
+      const secureUrl = await uploadAdminImage(file);
+      if (secureUrl) {
+        setFormData((prev) => ({ ...prev, imageUrl: secureUrl }));
+        setPreviewUrl(secureUrl);
+      } else {
+        throw new Error('Upload succeeded but no secure URL was returned from Cloudinary.');
+      }
+    } catch (err: any) {
+      console.error('Image upload error:', err);
+      const errorMsg =
+        err.response?.data?.message ||
+        err.message ||
+        'Failed to upload image to Cloudinary. Please check your network connection.';
+      setImageUploadError(errorMsg);
+    } finally {
+      setImageUploading(false);
+    }
+  };
+
+  const handleExternalUrlUpload = async () => {
+    if (!externalUrlInput.trim()) {
+      setImageUploadError('Please enter a valid external image URL.');
+      return;
+    }
+
+    const url = externalUrlInput.trim();
+    if (!/^https?:\/\//i.test(url)) {
+      setImageUploadError('Invalid URL. Link must start with http:// or https://');
+      return;
+    }
+
+    setImageUploadError('');
+    setImageUploading(true);
+
+    try {
+      const secureUrl = await uploadAdminImageUrl(url);
+      if (secureUrl) {
+        setFormData((prev) => ({ ...prev, imageUrl: secureUrl }));
+        setPreviewUrl(secureUrl);
+        setExternalUrlInput('');
+      } else {
+        throw new Error('Upload succeeded but no secure URL was returned from Cloudinary.');
+      }
+    } catch (err: any) {
+      console.error('Remote URL upload error:', err);
+      const errorMsg =
+        err.response?.data?.message ||
+        err.message ||
+        'Failed to import image from external URL to Cloudinary. Please verify the URL points directly to an image.';
+      setImageUploadError(errorMsg);
+    } finally {
+      setImageUploading(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleImageFileSelect(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
   };
 
   const handleCreateCategory = async () => {
@@ -191,6 +305,10 @@ export const ManageProductsPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (imageUploading) {
+      setModalError('Please wait for the image upload to Cloudinary to complete before saving.');
+      return;
+    }
     setSubmitting(true);
     setModalError('');
 
@@ -631,14 +749,216 @@ export const ManageProductsPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="text-xs text-muted block mb-1">Image URL (or Cloudinary link)</label>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs text-muted font-medium">
+                    Product Image * (Cloudinary Upload)
+                  </label>
+                  {!previewUrl && (
+                    <div className="inline-flex rounded-lg bg-page border border-line p-0.5 text-xs font-semibold">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setImageInputMode('upload');
+                          setImageUploadError('');
+                        }}
+                        className={`px-2.5 py-1 rounded-md transition-all flex items-center gap-1.5 ${
+                          imageInputMode === 'upload'
+                            ? 'bg-card text-body shadow-xs font-bold'
+                            : 'text-muted hover:text-body'
+                        }`}
+                      >
+                        <UploadCloud className="w-3.5 h-3.5" /> Upload File
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setImageInputMode('url');
+                          setImageUploadError('');
+                        }}
+                        className={`px-2.5 py-1 rounded-md transition-all flex items-center gap-1.5 ${
+                          imageInputMode === 'url'
+                            ? 'bg-card text-body shadow-xs font-bold'
+                            : 'text-muted hover:text-body'
+                        }`}
+                      >
+                        <LinkIcon className="w-3.5 h-3.5" /> Paste URL
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Hidden file input */}
                 <input
-                  type="url"
-                  value={formData.imageUrl}
-                  onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-                  placeholder="https://images.unsplash.com/..."
-                  className="w-full px-3 py-2 rounded-lg bg-page border border-line text-sm text-body focus:outline-hidden focus:border-body"
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/jpg"
+                  className="hidden"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      handleImageFileSelect(e.target.files[0]);
+                    }
+                  }}
                 />
+
+                {previewUrl ? (
+                  /* Preview Card with Image */
+                  <div className="relative p-3 rounded-xl bg-page border border-line flex items-center gap-4">
+                    <div className="relative w-20 h-20 rounded-lg overflow-hidden bg-card border border-line shrink-0 flex items-center justify-center shadow-xs">
+                      <img
+                        src={previewUrl}
+                        alt="Product preview"
+                        className="w-full h-full object-contain"
+                      />
+                      {imageUploading && (
+                        <div className="absolute inset-0 bg-ink/75 flex flex-col items-center justify-center text-white backdrop-blur-[1px]">
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <div className="flex items-center gap-1.5">
+                        {imageUploading ? (
+                          <span className="text-xs font-semibold text-blue-600 flex items-center gap-1">
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" /> Uploading to Cloudinary...
+                          </span>
+                        ) : (
+                          <span className="text-xs font-semibold text-emerald-600 flex items-center gap-1">
+                            <Check className="w-3.5 h-3.5" /> Hosted on Cloudinary
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-muted truncate font-mono">
+                        {formData.imageUrl || 'Uploading file stream to Cloudinary...'}
+                      </p>
+                      <div className="flex items-center gap-2 pt-1">
+                        <button
+                          type="button"
+                          disabled={imageUploading}
+                          onClick={() => {
+                            setImageInputMode('upload');
+                            fileInputRef.current?.click();
+                          }}
+                          className="text-xs font-semibold text-ink hover:underline disabled:opacity-50"
+                        >
+                          Change File
+                        </button>
+                        <span className="text-muted text-xs">•</span>
+                        <button
+                          type="button"
+                          disabled={imageUploading}
+                          onClick={() => {
+                            setPreviewUrl('');
+                            setFormData((prev) => ({ ...prev, imageUrl: '' }));
+                            setImageInputMode('url');
+                            setImageUploadError('');
+                          }}
+                          className="text-xs font-semibold text-blue-600 hover:underline disabled:opacity-50"
+                        >
+                          Paste URL
+                        </button>
+                        <span className="text-muted text-xs">•</span>
+                        <button
+                          type="button"
+                          disabled={imageUploading}
+                          onClick={() => {
+                            setPreviewUrl('');
+                            setFormData((prev) => ({ ...prev, imageUrl: '' }));
+                            setImageUploadError('');
+                            setExternalUrlInput('');
+                            if (fileInputRef.current) fileInputRef.current.value = '';
+                          }}
+                          className="text-xs font-semibold text-rose-500 hover:underline disabled:opacity-50"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : imageInputMode === 'url' ? (
+                  /* External URL Input State */
+                  <div className="p-3.5 rounded-xl bg-page border border-line space-y-2.5">
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <input
+                        type="url"
+                        value={externalUrlInput}
+                        onChange={(e) => setExternalUrlInput(e.target.value)}
+                        placeholder="Paste image link: https://images.unsplash.com/... or any .jpg/.png"
+                        disabled={imageUploading}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleExternalUrlUpload();
+                          }
+                        }}
+                        className="flex-1 px-3 py-2 rounded-lg bg-card border border-line text-sm text-body placeholder:text-muted focus:outline-hidden focus:border-body disabled:opacity-50"
+                      />
+                      <button
+                        type="button"
+                        disabled={!externalUrlInput.trim() || imageUploading}
+                        onClick={handleExternalUrlUpload}
+                        className="px-4 py-2 bg-ink text-white font-semibold text-xs rounded-lg hover:bg-ink-soft disabled:opacity-50 flex items-center justify-center gap-1.5 shrink-0"
+                      >
+                        {imageUploading ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            <span>Importing...</span>
+                          </>
+                        ) : (
+                          <>
+                            <UploadCloud className="w-3.5 h-3.5" />
+                            <span>Import to Cloudinary</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                    <p className="text-[11px] text-muted flex items-center gap-1">
+                      <span>💡</span> The remote image will be downloaded and saved permanently in your Cloudinary cloud.
+                    </p>
+                  </div>
+                ) : (
+                  /* Dropzone State */
+                  <div
+                    onDrop={handleDrop}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onClick={() => fileInputRef.current?.click()}
+                    className={`border-2 border-dashed rounded-xl p-5 text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-2 ${
+                      isDragging
+                        ? 'border-ink bg-page/80 scale-[0.99]'
+                        : 'border-line hover:border-muted bg-page/40 hover:bg-page'
+                    } ${imageUploading ? 'pointer-events-none opacity-60' : ''}`}
+                  >
+                    {imageUploading ? (
+                      <div className="flex flex-col items-center gap-2 py-2">
+                        <Loader2 className="w-7 h-7 text-ink animate-spin" />
+                        <span className="text-xs font-semibold text-body">Uploading to Cloudinary...</span>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="w-10 h-10 rounded-full bg-card border border-line flex items-center justify-center text-muted">
+                          <UploadCloud className="w-5 h-5 text-ink" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold text-body">
+                            Click to choose image <span className="font-normal text-muted">or drag & drop here</span>
+                          </p>
+                          <p className="text-[11px] text-muted mt-0.5">
+                            Supports JPG, PNG, WEBP (Max 5MB)
+                          </p>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+
+                {/* Upload Error Alert */}
+                {imageUploadError && (
+                  <div className="mt-2 p-2.5 rounded-lg bg-rose-50 border border-rose-100 text-rose-600 text-xs flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>{imageUploadError}</span>
+                  </div>
+                )}
               </div>
 
               <div>

@@ -1,0 +1,31 @@
+[
+  {
+    "id": "cat-00",
+    "name": "All Items",
+    "slug": "all-items"
+  },
+  {
+    "id": "cat-01",
+    "name": "Smart Gadgets",
+    "slug": "smart-gadgets",
+    "description": "Wearables, audio gears & intelligent personal gadgets"
+  },
+  {
+    "id": "cat-02",
+    "name": "Modern Lighting",
+    "slug": "modern-lighting",
+    "description": "Futuristic architectural & ambient neon lighting systems"
+  },
+  {
+    "id": "cat-03",
+    "name": "Home Appliances",
+    "slug": "home-appliances",
+    "description": "Smart high-efficiency living and climate control appliances"
+  },
+  {
+    "id": "cat-04",
+    "name": "Electrical Tools",
+    "slug": "electrical-tools",
+    "description": "Precision industrial multimeters, drills, and hardware"
+  }
+]

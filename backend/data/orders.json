@@ -1,0 +1,36 @@
+[
+  {
+    "id": "ord-1789116871517",
+    "userId": "user-1789112731841",
+    "totalAmount": 100,
+    "shippingAddress": "multan",
+    "shippingPhone": "03004949490",
+    "paymentMethod": "COD",
+    "status": "PENDING",
+    "orderItems": [
+      {
+        "id": "oi-1789116871517-cqot",
+        "productId": "prod-1789116362573",
+        "name": "led night bulb (pack of 4pcs) good quality",
+        "productName": "led night bulb (pack of 4pcs) good quality",
+        "quantity": 1,
+        "priceAtPurchase": 100,
+        "price": 100,
+        "imageUrl": "",
+        "product": {
+          "id": "prod-1789116362573",
+          "name": "led night bulb (pack of 4pcs) good quality",
+          "price": 100,
+          "imageUrl": ""
+        }
+      }
+    ],
+    "user": {
+      "id": "user-1789112731841",
+      "fullName": "Demo Customer",
+      "email": "amamachishtie@gmail.com"
+    },
+    "createdAt": "2026-09-11T08:54:31.517Z",
+    "updatedAt": "2026-09-11T08:54:31.517Z"
+  }
+]

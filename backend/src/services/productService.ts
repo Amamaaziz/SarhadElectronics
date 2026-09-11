@@ -1,4 +1,5 @@
 import { db, checkFirebaseConnection } from '../config/firebase';
+import { readJsonFile, writeJsonFile } from './diskStorage';
 
 export interface ProductQueryOptions {
   search?: string;
@@ -18,11 +19,25 @@ export const initialCategories = [
   { id: 'cat-04', name: 'Electrical Tools', slug: 'electrical-tools', description: 'Precision industrial multimeters, drills, and hardware' },
 ];
 
-export let memoryProducts: any[] = [];
-export let memoryCategories = [...initialCategories];
-export let memoryOrders: any[] = [];
-export let memoryMessages: any[] = [];
-export let memorySubscribers: any[] = [];
+export const initialProducts: any[] = [];
+
+// Persistent local storage initialization
+export let memoryProducts: any[] = readJsonFile<any[]>('products.json', []);
+export let memoryCategories: any[] = readJsonFile<any[]>('categories.json', initialCategories);
+export let memoryOrders: any[] = readJsonFile<any[]>('orders.json', []);
+export let memoryMessages: any[] = readJsonFile<any[]>('messages.json', []);
+export let memorySubscribers: any[] = readJsonFile<any[]>('subscribers.json', []);
+
+// Persist helpers
+export const saveProductsToDisk = () => writeJsonFile('products.json', memoryProducts);
+export const saveCategoriesToDisk = () => writeJsonFile('categories.json', memoryCategories);
+export const saveOrdersToDisk = () => writeJsonFile('orders.json', memoryOrders);
+export const saveMessagesToDisk = () => writeJsonFile('messages.json', memoryMessages);
+export const saveSubscribersToDisk = () => writeJsonFile('subscribers.json', memorySubscribers);
+
+// Initial disk write if files didn't exist
+saveProductsToDisk();
+saveCategoriesToDisk();
 
 // Connection checker
 export const checkDbConnection = async (): Promise<boolean> => {
@@ -44,7 +59,7 @@ export const getProductsFromStore = async (options: ProductQueryOptions) => {
       const snapshot = await query.get();
       products = snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
     } catch (e) {
-      console.warn('⚠️ Firestore query error, falling back to in-memory:', e);
+      console.warn('⚠️ Firestore query error, falling back to local disk storage:', e);
       products = [...memoryProducts];
     }
   } else {
@@ -70,7 +85,7 @@ export const getProductsFromStore = async (options: ProductQueryOptions) => {
         (p.name && p.name.toLowerCase().includes(query)) ||
         (p.description && p.description.toLowerCase().includes(query)) ||
         (p.brand && p.brand.toLowerCase().includes(query)) ||
-        (p.categoryName && p.categoryName.toLowerCase().includes(query))
+        (p.categoryName && p.categoryName.toLowerCase() === query)
     );
   }
 
@@ -130,7 +145,6 @@ export const getCategoriesFromStore = async () => {
         return snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
       }
     } catch {
-
       // Fallback
     }
   }
@@ -153,76 +167,81 @@ export const createProductInStore = async (data: any) => {
   const galleryUrls = data.galleryUrls || [imageUrl];
 
   if (isDbLive) {
-    // 1. Resolve or auto-create category in Firestore
-    let category: any = null;
-    if (data.categoryId) {
-      const catDoc = await db.collection('categories').doc(data.categoryId).get();
-      if (catDoc.exists) {
-        category = { id: catDoc.id, ...catDoc.data() };
-      } else {
-        const catSnap = await db.collection('categories').where('slug', '==', data.categoryId).limit(1).get();
+    try {
+      // 1. Resolve or auto-create category in Firestore
+      let category: any = null;
+      if (data.categoryId) {
+        const catDoc = await db.collection('categories').doc(data.categoryId).get();
+        if (catDoc.exists) {
+          category = { id: catDoc.id, ...catDoc.data() };
+        } else {
+          const catSnap = await db.collection('categories').where('slug', '==', data.categoryId).limit(1).get();
+          if (!catSnap.empty) {
+            category = { id: catSnap.docs[0].id, ...catSnap.docs[0].data() };
+          }
+        }
+      }
+
+      if (!category && data.categoryName) {
+        const catSnap = await db
+          .collection('categories')
+          .where('name', '==', data.categoryName.trim())
+          .limit(1)
+          .get();
         if (!catSnap.empty) {
           category = { id: catSnap.docs[0].id, ...catSnap.docs[0].data() };
         }
       }
-    }
 
-    if (!category && data.categoryName) {
-      const catSnap = await db
-        .collection('categories')
-        .where('name', '==', data.categoryName.trim())
-        .limit(1)
-        .get();
-      if (!catSnap.empty) {
-        category = { id: catSnap.docs[0].id, ...catSnap.docs[0].data() };
+      if (!category) {
+        const catName = data.categoryName || 'General Electronics';
+        const catSlug = (catName.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'general') + '-' + Date.now().toString().slice(-4);
+        const catRef = db.collection('categories').doc();
+        category = {
+          id: catRef.id,
+          name: catName,
+          slug: catSlug,
+          description: `Products under ${catName}`,
+          createdAt: new Date().toISOString(),
+        };
+        await catRef.set(category);
       }
-    }
 
-    if (!category) {
-      const catName = data.categoryName || 'General Electronics';
-      const catSlug = (catName.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'general') + '-' + Date.now().toString().slice(-4);
-      const catRef = db.collection('categories').doc();
-      category = {
-        id: catRef.id,
-        name: catName,
-        slug: catSlug,
-        description: `Products under ${catName}`,
+      const prodRef = db.collection('products').doc();
+      const newProduct = {
+        id: prodRef.id,
+        name: data.name,
+        slug,
+        description,
+        price,
+        stock,
+        categoryId: category.id,
+        categoryName: category.name,
+        categorySlug: category.slug,
+        brand,
+        featured,
+        rating: 5.0,
+        reviewsCount: 0,
+        imageUrl,
+        galleryUrls,
         createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       };
-      await catRef.set(category);
+
+      await prodRef.set(newProduct);
+      memoryProducts.unshift(newProduct);
+      saveProductsToDisk();
+      return newProduct;
+    } catch (err) {
+      console.warn('⚠️ Firestore createProduct error, writing to local persistent disk:', err);
     }
-
-    const prodRef = db.collection('products').doc();
-    const newProduct = {
-      id: prodRef.id,
-      name: data.name,
-      slug,
-      description,
-      price,
-      stock,
-      categoryId: category.id,
-      categoryName: category.name,
-      categorySlug: category.slug,
-      brand,
-      featured,
-      rating: 5.0,
-      reviewsCount: 0,
-      imageUrl,
-      galleryUrls,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    await prodRef.set(newProduct);
-    memoryProducts.unshift(newProduct);
-    return newProduct;
   }
 
-  // In-memory fallback
+  // Local persistent disk storage fallback
   const category =
     memoryCategories.find(
       (c) => c.id === data.categoryId || c.name.toLowerCase() === (data.categoryName || '').toLowerCase()
-    ) || memoryCategories[1];
+    ) || memoryCategories[1] || { id: 'cat-01', name: 'Smart Gadgets', slug: 'smart-gadgets' };
 
   const newProduct = {
     id: `prod-${Date.now()}`,
@@ -243,44 +262,57 @@ export const createProductInStore = async (data: any) => {
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
+
   memoryProducts.unshift(newProduct);
+  saveProductsToDisk();
   return newProduct;
 };
 
 export const updateProductInStore = async (id: string, data: any) => {
   const isDbLive = await checkFirebaseConnection();
   if (isDbLive) {
-    const updateData: any = {};
-    if (data.name !== undefined) updateData.name = data.name;
-    if (data.description !== undefined) updateData.description = data.description;
-    if (data.price !== undefined) updateData.price = Number(data.price);
-    if (data.stock !== undefined) updateData.stock = Number(data.stock);
-    if (data.brand !== undefined) updateData.brand = data.brand;
-    if (data.featured !== undefined) updateData.featured = Boolean(data.featured);
-    if (data.imageUrl !== undefined) updateData.imageUrl = data.imageUrl;
-    if (data.galleryUrls !== undefined) updateData.galleryUrls = data.galleryUrls;
+    try {
+      const updateData: any = {};
+      if (data.name !== undefined) updateData.name = data.name;
+      if (data.description !== undefined) updateData.description = data.description;
+      if (data.price !== undefined) updateData.price = Number(data.price);
+      if (data.stock !== undefined) updateData.stock = Number(data.stock);
+      if (data.brand !== undefined) updateData.brand = data.brand;
+      if (data.featured !== undefined) updateData.featured = Boolean(data.featured);
+      if (data.imageUrl !== undefined) updateData.imageUrl = data.imageUrl;
+      if (data.galleryUrls !== undefined) updateData.galleryUrls = data.galleryUrls;
 
-    if (data.categoryId) {
-      const catDoc = await db.collection('categories').doc(data.categoryId).get();
-      if (catDoc.exists) {
-        const cat = catDoc.data()!;
-        updateData.categoryId = catDoc.id;
-        updateData.categoryName = cat.name;
-        updateData.categorySlug = cat.slug;
+      if (data.categoryId) {
+        const catDoc = await db.collection('categories').doc(data.categoryId).get();
+        if (catDoc.exists) {
+          const cat = catDoc.data()!;
+          updateData.categoryId = catDoc.id;
+          updateData.categoryName = cat.name;
+          updateData.categorySlug = cat.slug;
+        }
       }
+
+      updateData.updatedAt = new Date().toISOString();
+
+      const prodRef = db.collection('products').doc(id);
+      const prodDoc = await prodRef.get();
+      if (!prodDoc.exists) {
+        return null;
+      }
+
+      await prodRef.update(updateData);
+      const updatedDoc = await prodRef.get();
+      const result = { id: updatedDoc.id, ...updatedDoc.data() };
+
+      const memIdx = memoryProducts.findIndex((p) => p.id === id);
+      if (memIdx !== -1) {
+        memoryProducts[memIdx] = result;
+      }
+      saveProductsToDisk();
+      return result;
+    } catch (err) {
+      console.warn('⚠️ Firestore update error, updating local persistent disk:', err);
     }
-
-    updateData.updatedAt = new Date().toISOString();
-
-    const prodRef = db.collection('products').doc(id);
-    const prodDoc = await prodRef.get();
-    if (!prodDoc.exists) {
-      return null;
-    }
-
-    await prodRef.update(updateData);
-    const updatedDoc = await prodRef.get();
-    return { id: updatedDoc.id, ...updatedDoc.data() };
   }
 
   const index = memoryProducts.findIndex((p) => p.id === id);
@@ -291,20 +323,23 @@ export const updateProductInStore = async (id: string, data: any) => {
     ...data,
     updatedAt: new Date().toISOString(),
   };
+  saveProductsToDisk();
   return memoryProducts[index];
 };
 
 export const deleteProductInStore = async (id: string) => {
   const isDbLive = await checkFirebaseConnection();
   if (isDbLive) {
-    await db.collection('products').doc(id).delete();
-    return true;
+    try {
+      await db.collection('products').doc(id).delete();
+    } catch (err) {
+      console.warn('⚠️ Firestore delete error:', err);
+    }
   }
 
   const index = memoryProducts.findIndex((p) => p.id === id);
   if (index === -1) return false;
   memoryProducts.splice(index, 1);
+  saveProductsToDisk();
   return true;
 };
-
-

@@ -1,0 +1,86 @@
+[
+  {
+    "id": "wSIR5eIleeVmcnN9IZot",
+    "name": "Old Repaire 12w LIMAN BRANDED LED BULB 💡",
+    "slug": "old-repaire-12w-liman-branded-led-bulb--2583",
+    "description": "Real Watt 12W blub hy Long life time hy High lumen led\n\nReal Watt 12W blub hy\n\nLong life time hy\n\nHigh lumen led\n\n",
+    "price": 3333,
+    "stock": 22,
+    "categoryId": "cGsP8IyGniItw6tGc2hi",
+    "categoryName": "General Electronics",
+    "categorySlug": "general-electronics-4718",
+    "brand": "Sarhad",
+    "featured": false,
+    "rating": 5,
+    "reviewsCount": 0,
+    "imageUrl": "https://res.cloudinary.com/be8tdpje/image/upload/v1789119381/sarhad_electrics/products/cvtwbcuigocdoctmnsya.avif",
+    "galleryUrls": [
+      "https://res.cloudinary.com/be8tdpje/image/upload/v1789119381/sarhad_electrics/products/cvtwbcuigocdoctmnsya.avif"
+    ],
+    "createdAt": "2026-09-11T09:36:35.964Z",
+    "updatedAt": "2026-09-11T09:36:35.964Z"
+  },
+  {
+    "id": "6nP8vxA1rBnyLHjM996H",
+    "name": "10 PCS DC 12V 18W LED Lamp Panel Chip Bead Bulbs",
+    "slug": "10-pcs-dc-12v-18w-led-lamp-panel-chip-bead-bulbs-4015",
+    "description": "Set Quantity: 2, 5 and 10 Pieces\nVoltage: DC 12V\nPower: 18W (per panel)\nLight Type: LED Chip Bead Panel\nBrightness: High Brightness\nApplications: Automotive, solar lighting, DIY projects, emergency lighting\nWeight: Approx. 20–30 grams per panel\n\n",
+    "price": 100,
+    "stock": 3,
+    "categoryId": "CoBnWc6Te82zAuCcpGzc",
+    "categoryName": "General Electronics",
+    "categorySlug": "general-electronics-5539",
+    "brand": "Sarhad",
+    "featured": true,
+    "rating": 5,
+    "reviewsCount": 0,
+    "imageUrl": "https://img.drz.lazcdn.com/static/pk/p/943a0d8ac4e5e4232f5655ee6e1143eb.jpg_400x400q75.avif",
+    "galleryUrls": [
+      "https://img.drz.lazcdn.com/static/pk/p/943a0d8ac4e5e4232f5655ee6e1143eb.jpg_400x400q75.avif"
+    ],
+    "createdAt": "2026-09-11T09:07:56.868Z",
+    "updatedAt": "2026-09-11T09:07:56.868Z"
+  },
+  {
+    "id": "prod-1789116802926",
+    "name": "10 PCS DC 12V 18W LED Lamp Panel Chip Bead Bulbs",
+    "slug": "10-pcs-dc-12v-18w-led-lamp-panel-chip-bead-bulbs-2925",
+    "description": "Set Quantity: 2, 5 and 10 Pieces\nVoltage: DC 12V\nPower: 18W (per panel)\nLight Type: LED Chip Bead Panel\nBrightness: High Brightness\nApplications: Automotive, solar lighting, DIY projects, emergency lighting\nWeight: Approx. 20–30 grams per panel\n\n",
+    "price": 33,
+    "stock": 2,
+    "categoryId": "cat-00",
+    "categoryName": "All Items",
+    "categorySlug": "all-items",
+    "imageUrl": "https://img.drz.lazcdn.com/static/pk/p/943a0d8ac4e5e4232f5655ee6e1143eb.jpg_400x400q75.avif",
+    "galleryUrls": [
+      "https://img.drz.lazcdn.com/static/pk/p/943a0d8ac4e5e4232f5655ee6e1143eb.jpg_400x400q75.avif"
+    ],
+    "featured": false,
+    "rating": 5,
+    "reviewsCount": 0,
+    "brand": "Sarhad",
+    "createdAt": "2026-09-11T08:53:22.926Z",
+    "updatedAt": "2026-09-11T08:53:22.926Z"
+  },
+  {
+    "id": "prod-1789116362573",
+    "name": "led night bulb (pack of 4pcs) good quality",
+    "slug": "led-night-bulb-pack-of-4pcs-good-quality-2573",
+    "description": "Good quality\nGood light\nBeautiful shape",
+    "price": 100,
+    "stock": 20,
+    "categoryId": "cat-02",
+    "categoryName": "Modern Lighting",
+    "categorySlug": "modern-lighting",
+    "imageUrl": "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=800&auto=format&fit=crop&q=80",
+    "galleryUrls": [
+      "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=800&auto=format&fit=crop&q=80"
+    ],
+    "featured": true,
+    "rating": 5,
+    "reviewsCount": 0,
+    "brand": "Philips",
+    "createdAt": "2026-09-11T08:46:02.573Z",
+    "updatedAt": "2026-09-11T08:46:02.573Z"
+  }
+]

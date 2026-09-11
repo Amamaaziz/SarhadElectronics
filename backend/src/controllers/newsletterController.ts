@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { sendSuccess, sendError } from '../utils/apiResponse';
 import { db, checkFirebaseConnection } from '../config/firebase';
-import { memorySubscribers } from '../services/productService';
+import { memorySubscribers, saveSubscribersToDisk } from '../services/productService';
 
 export const subscribe = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -16,28 +16,34 @@ export const subscribe = async (req: Request, res: Response): Promise<void> => {
     const isDbLive = await checkFirebaseConnection();
 
     if (isDbLive) {
-      const existingSnap = await db
-        .collection('subscribers')
-        .where('email', '==', emailNormalized)
-        .limit(1)
-        .get();
+      try {
+        const existingSnap = await db
+          .collection('subscribers')
+          .where('email', '==', emailNormalized)
+          .limit(1)
+          .get();
 
-      if (!existingSnap.empty) {
-        const existing = { id: existingSnap.docs[0].id, ...existingSnap.docs[0].data() };
-        sendSuccess(res, existing, 'You are already subscribed to our newsletter!');
+        if (!existingSnap.empty) {
+          const existing = { id: existingSnap.docs[0].id, ...existingSnap.docs[0].data() };
+          sendSuccess(res, existing, 'You are already subscribed to our newsletter!');
+          return;
+        }
+
+        const subRef = db.collection('subscribers').doc();
+        const subscriber = {
+          id: subRef.id,
+          email: emailNormalized,
+          subscribedAt: new Date().toISOString(),
+        };
+
+        await subRef.set(subscriber);
+        memorySubscribers.push(subscriber);
+        saveSubscribersToDisk();
+        sendSuccess(res, subscriber, 'Successfully subscribed to Sarhad Electrics newsletter!', 201);
         return;
+      } catch (err) {
+        console.warn('⚠️ Firestore subscribe error, saving to disk:', err);
       }
-
-      const subRef = db.collection('subscribers').doc();
-      const subscriber = {
-        id: subRef.id,
-        email: emailNormalized,
-        subscribedAt: new Date().toISOString(),
-      };
-
-      await subRef.set(subscriber);
-      sendSuccess(res, subscriber, 'Successfully subscribed to Sarhad Electrics newsletter!', 201);
-      return;
     }
 
     const existing = memorySubscribers.find((s) => s.email === emailNormalized);
@@ -52,6 +58,7 @@ export const subscribe = async (req: Request, res: Response): Promise<void> => {
       subscribedAt: new Date().toISOString(),
     };
     memorySubscribers.push(subscriber);
+    saveSubscribersToDisk();
 
     sendSuccess(res, subscriber, 'Successfully subscribed to Sarhad Electrics newsletter!', 201);
   } catch (error: any) {
@@ -64,17 +71,18 @@ export const getSubscribers = async (req: Request, res: Response): Promise<void>
     const isDbLive = await checkFirebaseConnection();
 
     if (isDbLive) {
-      const snapshot = await db.collection('subscribers').orderBy('subscribedAt', 'desc').get();
-      const subscribers = snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
-      sendSuccess(res, subscribers);
-      return;
+      try {
+        const snapshot = await db.collection('subscribers').orderBy('subscribedAt', 'desc').get();
+        const subscribers = snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
+        sendSuccess(res, subscribers);
+        return;
+      } catch (err) {
+        console.warn('⚠️ Firestore getSubscribers error, reading from disk:', err);
+      }
     }
-
 
     sendSuccess(res, memorySubscribers);
   } catch (error: any) {
     sendError(res, 'Failed to fetch subscribers', 500, error);
   }
 };
-
-

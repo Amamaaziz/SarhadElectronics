@@ -7,6 +7,7 @@ import categoryRoutes from './routes/categoryRoutes';
 import orderRoutes from './routes/orderRoutes';
 import contactRoutes from './routes/contactRoutes';
 import newsletterRoutes from './routes/newsletterRoutes';
+import uploadRoutes from './routes/uploadRoutes';
 import { errorHandler, notFoundHandler } from './middlewares/errorMiddleware';
 
 dotenv.config();
@@ -42,6 +43,7 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/newsletter', newsletterRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // Error Handling
 app.use(notFoundHandler);
