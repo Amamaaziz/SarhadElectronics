@@ -87,17 +87,17 @@ export const HomePage: React.FC = () => {
 
               <motion.h1
                 variants={itemVariants}
-                className="text-4xl sm:text-6xl font-extrabold font-['Space_Grotesk'] tracking-tight text-white leading-[1.1]"
+                className="text-4xl sm:text-6xl md:text-7xl lg:text-[85px] xl:text-[100px] 2xl:text-[108px] font-[800] font-['Space_Grotesk'] tracking-[-0.035em] text-white leading-[1.06]"
               >
                 Power Your Future With{' '}
-                <span className="text-transparent bg-clip-text bg-[linear-gradient(90deg,#FFFFFF_0%,#00E5FF_35%,#0B6CCF_70%,#A855F7_100%)]">
+                <span className="text-transparent bg-clip-text bg-[linear-gradient(90deg,#FFFFFF_0%,#00E5FF_50%,#A855F7_100%)]">
                   Precision Hardware
                 </span>
               </motion.h1>
 
               <motion.p
                 variants={itemVariants}
-                className="text-base sm:text-lg text-[#94A3B8] font-['Plus_Jakarta_Sans'] font-normal max-w-2xl mx-auto lg:mx-0 leading-relaxed"
+                className="text-base sm:text-lg lg:text-[21px] xl:text-[22px] text-[#94A3B8] font-['Plus_Jakarta_Sans'] font-normal max-w-2xl mx-auto lg:mx-0 leading-[1.6]"
               >
                 Discover flagship smart gadgets, energy-efficient home appliances,
                 and industrial-grade electrical tools crafted for durability, performance, and seamless automation.
