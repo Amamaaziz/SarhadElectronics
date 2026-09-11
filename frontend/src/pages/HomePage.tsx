@@ -53,10 +53,16 @@ export const HomePage: React.FC = () => {
     visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] as const } },
   };
 
+  const spotlightProduct = heroFeatured || {
+    name: 'Smart Apex Hub Pro',
+    price: 14999,
+    imageUrl: 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=800&auto=format&fit=crop&q=80',
+  };
+
   return (
     <div className="space-y-12">
       {/* Hero Section with Parallax */}
-      <section ref={heroRef} className="relative overflow-hidden pt-8 pb-20 lg:pt-16 lg:pb-28">
+      <section ref={heroRef} className="relative overflow-hidden bg-gradient-to-b from-[#07101E] to-[#081021] pt-8 pb-20 lg:pt-16 lg:pb-28">
         {/* Parallax Glow backdrop effects */}
         <motion.div
           style={{ y: heroGlowY, opacity: heroGlowOpacity }}
@@ -65,7 +71,7 @@ export const HomePage: React.FC = () => {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <motion.div style={{ y: heroContentY }} className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-            {/* Left Hero Copy */}
+            {/* Left Headline Block */}
             <motion.div
               variants={heroVariants}
               initial="hidden"
@@ -73,7 +79,7 @@ export const HomePage: React.FC = () => {
               className="lg:col-span-7 space-y-6 text-center lg:text-left"
             >
               <motion.div variants={itemVariants}>
-                <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-surface/70 border border-cyan-neon/30 text-cyan-neon text-xs font-semibold uppercase tracking-wider backdrop-blur-md shadow-neon-cyan">
+                <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-surface/70 border border-[rgba(0,229,255,0.15)] text-[#00E5FF] text-xs font-semibold uppercase tracking-wider backdrop-blur-md shadow-neon-cyan">
                   <Sparkles className="w-3.5 h-3.5 animate-spin-slow" />
                   Premium Selection 2026
                 </span>
@@ -84,14 +90,14 @@ export const HomePage: React.FC = () => {
                 className="text-4xl sm:text-6xl font-extrabold font-['Space_Grotesk'] tracking-tight text-white leading-[1.1]"
               >
                 Power Your Future With{' '}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-neon via-cyan-hover to-magenta-purple drop-shadow-[0_0_15px_rgba(0,229,255,0.4)]">
+                <span className="text-transparent bg-clip-text bg-[linear-gradient(90deg,#FFFFFF_0%,#00E5FF_35%,#0B6CCF_70%,#A855F7_100%)]">
                   Precision Hardware
                 </span>
               </motion.h1>
 
               <motion.p
                 variants={itemVariants}
-                className="text-base sm:text-lg text-textMuted max-w-2xl mx-auto lg:mx-0 leading-relaxed"
+                className="text-base sm:text-lg text-[#94A3B8] font-['Plus_Jakarta_Sans'] font-normal max-w-2xl mx-auto lg:mx-0 leading-relaxed"
               >
                 Discover flagship smart gadgets, energy-efficient home appliances,
                 and industrial-grade electrical tools crafted for durability, performance, and seamless automation.
@@ -102,21 +108,26 @@ export const HomePage: React.FC = () => {
                 variants={itemVariants}
                 className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-2"
               >
-                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <motion.div
+                  whileHover={{
+                    scale: 1.05,
+                    boxShadow: '0 0 25px rgba(0, 229, 255, 0.5)',
+                  }}
+                  whileTap={{ scale: 0.98 }}
+                  className="rounded-[16px] w-full sm:w-auto"
+                >
                   <Link
                     to="/shop"
-                    className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-cyan-neon text-navy-950 font-bold text-sm tracking-wider uppercase font-['Space_Grotesk'] shadow-neon-cyan-lg hover:shadow-neon-cyan transition-all flex items-center justify-center gap-2 btn-shine"
+                    className="block w-full sm:w-auto px-[32px] py-[16px] rounded-[16px] bg-[#00E5FF] text-[#07101E] font-extrabold text-sm tracking-widest uppercase font-['Space_Grotesk'] text-center"
                   >
-                    <Zap className="w-4 h-4 fill-navy-950" />
                     Shop Now
-                    <ArrowRight className="w-4 h-4" />
                   </Link>
                 </motion.div>
 
                 <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                   <Link
                     to="/shop"
-                    className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-transparent hover:bg-surface/40 text-textMuted hover:text-white font-bold text-xs tracking-widest uppercase font-['Space_Grotesk'] transition-all text-center block"
+                    className="w-full sm:w-auto px-8 py-4 rounded-[16px] bg-transparent hover:bg-surface/40 text-[#94A3B8] hover:text-white font-bold text-xs tracking-widest uppercase font-['Space_Grotesk'] transition-all text-center block"
                   >
                     View Deals
                   </Link>
@@ -132,7 +143,7 @@ export const HomePage: React.FC = () => {
                   <div className="text-2xl sm:text-3xl font-extrabold font-['Space_Grotesk'] text-white">
                     50k+
                   </div>
-                  <div className="text-[11px] text-textMuted uppercase tracking-wider mt-0.5">
+                  <div className="text-[11px] text-[#94A3B8] uppercase tracking-wider mt-0.5">
                     Products Sold
                   </div>
                 </div>
@@ -141,7 +152,7 @@ export const HomePage: React.FC = () => {
                   <div className="text-2xl sm:text-3xl font-extrabold font-['Space_Grotesk'] text-white">
                     4.9/5
                   </div>
-                  <div className="text-[11px] text-textMuted uppercase tracking-wider mt-0.5">
+                  <div className="text-[11px] text-[#94A3B8] uppercase tracking-wider mt-0.5">
                     User Rating
                   </div>
                 </div>
@@ -150,128 +161,45 @@ export const HomePage: React.FC = () => {
                   <div className="text-2xl sm:text-3xl font-extrabold font-['Space_Grotesk'] text-white">
                     24/7
                   </div>
-                  <div className="text-[11px] text-textMuted uppercase tracking-wider mt-0.5">
+                  <div className="text-[11px] text-[#94A3B8] uppercase tracking-wider mt-0.5">
                     Tech Support
                   </div>
                 </div>
               </motion.div>
             </motion.div>
 
-            {/* Right Hero Product Showcase or Brand Showcase */}
+            {/* Right Product Spotlight Card (Minimal Glassmorphism) */}
             <div className="lg:col-span-5 flex justify-center">
-              {heroFeatured ? (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9, y: 30 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  transition={{ duration: 0.8, delay: 0.3 }}
-                  className="relative w-full max-w-md group"
-                >
-                  {/* Rotating Neon Aura Ring */}
-                  <div className="absolute -inset-1.5 bg-gradient-to-tr from-cyan-neon via-magenta-purple to-cyan-neon rounded-3xl opacity-30 blur-xl group-hover:opacity-60 transition duration-700 animate-spin-slow" />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+                className="w-full max-w-md bg-[rgba(19,29,51,0.65)] backdrop-blur-[16px] border border-[rgba(0,229,255,0.12)] rounded-[24px] p-[24px] shadow-2xl"
+              >
+                {/* 1. Small centered caption label at top */}
+                <div className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-[#94A3B8] mb-4 font-['Space_Grotesk']">
+                  Spotlight
+                </div>
 
-                  <div className="relative rounded-3xl bg-surface-card/90 border border-cyan-neon/30 p-6 overflow-hidden shadow-2xl backdrop-blur-2xl">
-                    {/* Top Row: Spotlight Pill & Equalizer Soundwave */}
-                    <div className="flex items-center justify-between mb-4">
-                      <span className="px-3 py-1 text-xs font-bold rounded-lg bg-cyan-neon/15 text-cyan-neon border border-cyan-neon/30 font-['Space_Grotesk'] uppercase flex items-center gap-1.5 shadow-neon-cyan">
-                        <span className="w-2 h-2 rounded-full bg-cyan-neon animate-ping" />
-                        Spotlight Featured
-                      </span>
+                {/* 2. Rounded product image below it (16px radius) */}
+                <div className="w-full aspect-square rounded-[16px] overflow-hidden bg-[#07101E]/60 flex items-center justify-center p-6">
+                  <img
+                    src={spotlightProduct.imageUrl}
+                    alt={spotlightProduct.name}
+                    className="w-full h-full object-contain hover:scale-105 transition-transform duration-500 drop-shadow-[0_15px_25px_rgba(0,0,0,0.6)]"
+                  />
+                </div>
 
-                      {/* Equalizer audio animation */}
-                      <div className="flex items-end gap-1 px-2.5 py-1 rounded-lg bg-navy-900 border border-surface-border">
-                        <Volume2 className="w-3.5 h-3.5 text-cyan-neon mr-1" />
-                        <span className="w-0.5 bg-cyan-neon rounded-full animate-soundwave-1" />
-                        <span className="w-0.5 bg-cyan-neon rounded-full animate-soundwave-2" />
-                        <span className="w-0.5 bg-magenta-neon rounded-full animate-soundwave-3" />
-                        <span className="w-0.5 bg-cyan-neon rounded-full animate-soundwave-4" />
-                      </div>
-                    </div>
+                {/* 3. Bold product name */}
+                <h3 className="text-xl sm:text-2xl font-bold font-['Space_Grotesk'] text-white mt-4 text-center">
+                  {spotlightProduct.name}
+                </h3>
 
-                    {/* Floating Product Image Container */}
-                    <div className="aspect-4/3 w-full bg-navy-950/60 rounded-2xl overflow-hidden flex items-center justify-center p-4 relative animate-float-slow">
-                      <img
-                        src={heroFeatured.imageUrl}
-                        alt={heroFeatured.name}
-                        className="w-full h-full object-contain group-hover:scale-108 transition-transform duration-500 drop-shadow-[0_15px_25px_rgba(0,0,0,0.6)]"
-                      />
-                    </div>
-
-                    <div className="mt-6 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-xl font-bold font-['Space_Grotesk'] text-white">
-                          {heroFeatured.name}
-                        </h3>
-                        <span className="text-2xl font-black font-['Space_Grotesk'] text-cyan-neon drop-shadow-[0_0_8px_rgba(0,229,255,0.4)]">
-                          Rs.{Number(heroFeatured.price).toFixed(2)}
-                        </span>
-                      </div>
-                      <p className="text-xs text-textMuted line-clamp-2">
-                        {heroFeatured.description}
-                      </p>
-
-                      <div className="pt-4 flex items-center gap-3">
-                        <motion.button
-                          whileHover={{ scale: 1.03 }}
-                          whileTap={{ scale: 0.97 }}
-                          onClick={() => addToCart(heroFeatured)}
-                          className="flex-1 py-3.5 rounded-xl bg-cyan-neon text-navy-950 font-bold text-xs uppercase tracking-wider font-['Space_Grotesk'] shadow-neon-cyan hover:shadow-neon-cyan-lg transition-all btn-shine"
-                        >
-                          Add to Cart
-                        </motion.button>
-                        <Link
-                          to={`/product/${heroFeatured.id}`}
-                          className="px-5 py-3.5 rounded-xl bg-surface hover:bg-surface/80 border border-surface-border text-xs text-white transition-colors"
-                        >
-                          Details
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              ) : (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  transition={{ duration: 0.8, delay: 0.2 }}
-                  className="relative w-full max-w-md"
-                >
-                  <div className="absolute -inset-1 bg-gradient-to-tr from-cyan-neon/30 via-magenta-purple/30 to-cyan-neon/30 rounded-3xl opacity-40 blur-xl animate-pulse-glow" />
-                  <div className="relative rounded-3xl bg-surface-card/90 border border-cyan-neon/30 p-8 text-center space-y-6 shadow-2xl backdrop-blur-2xl">
-                    <div className="w-16 h-16 rounded-2xl bg-cyan-neon/10 border border-cyan-neon/30 mx-auto flex items-center justify-center text-cyan-neon shadow-neon-cyan">
-                      <Zap className="w-8 h-8" />
-                    </div>
-                    <div className="space-y-2">
-                      <span className="text-xs font-bold uppercase tracking-widest text-cyan-neon font-['Space_Grotesk']">
-                        Official Store Experience
-                      </span>
-                      <h3 className="text-2xl font-bold font-['Space_Grotesk'] text-white">
-                        Sarhad Electronics
-                      </h3>
-                      <p className="text-xs text-textMuted leading-relaxed">
-                        Peshawar's trusted destination for precision hardware, smart gadgets, and architectural lighting solutions.
-                      </p>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3 pt-2 text-left">
-                      <div className="p-3 rounded-xl bg-navy-900/80 border border-surface-border">
-                        <div className="text-[11px] font-bold text-white">Cash on Delivery</div>
-                        <div className="text-[10px] text-textMuted">Safe nationwide delivery</div>
-                      </div>
-                      <div className="p-3 rounded-xl bg-navy-900/80 border border-surface-border">
-                        <div className="text-[11px] font-bold text-white">100% Genuine</div>
-                        <div className="text-[10px] text-textMuted">Verified brand hardware</div>
-                      </div>
-                    </div>
-
-                    <Link
-                      to="/shop"
-                      className="block w-full py-3.5 rounded-xl bg-cyan-neon text-navy-950 font-bold text-xs uppercase tracking-wider font-['Space_Grotesk'] shadow-neon-cyan hover:shadow-neon-cyan-lg transition-all"
-                    >
-                      Explore Categories
-                    </Link>
-                  </div>
-                </motion.div>
-              )}
+                {/* 4. Price displayed in neon cyan underneath */}
+                <div className="text-2xl font-extrabold font-['Space_Grotesk'] text-[#00E5FF] mt-1 text-center">
+                  Rs.{Number(spotlightProduct.price).toFixed(2)}
+                </div>
+              </motion.div>
             </div>
           </motion.div>
         </div>
