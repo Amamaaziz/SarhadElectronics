@@ -39,7 +39,7 @@ export const App: React.FC = () => {
             <div className="fixed top-1/2 right-10 w-[500px] h-[500px] bg-[#0B6CCF]/10 rounded-full blur-[180px] pointer-events-none -z-10" />
 
             <Navbar />
-            <main className="flex-1 relative z-10">
+            <main className="flex-1 relative z-10 pt-20">
               <Routes>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/shop" element={<ShopPage />} />

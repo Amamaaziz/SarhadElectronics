@@ -18,7 +18,7 @@ export const Navbar: React.FC = () => {
   ];
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-[#07101E]/90 backdrop-blur-[20px] border-b border-[rgba(0,229,255,0.15)]">
+    <header className="fixed top-0 left-0 right-0 z-50 w-full bg-[#07101E]/90 backdrop-blur-[20px] border-b border-[rgba(0,229,255,0.15)]">
       <div className="max-w-7xl mx-auto h-20 px-4 sm:px-6 lg:px-8 flex items-center justify-between">
         {/* Brand Logo */}
         <Link to="/" className="flex items-center text-lg sm:text-xl font-extrabold font-['Space_Grotesk'] tracking-tight text-white group">
