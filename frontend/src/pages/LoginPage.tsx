@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { LogIn, Lock, Mail, AlertCircle, Zap } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -23,7 +24,12 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-[75vh] flex items-center justify-center px-4 py-12">
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: 'easeOut' }}
+      className="min-h-[75vh] flex items-center justify-center px-4 py-12"
+    >
       <div className="w-full max-w-md space-y-6">
         {/* Brand Header */}
         <div className="text-center space-y-2">
@@ -112,7 +118,7 @@ export const LoginPage: React.FC = () => {
           </Link>
         </p>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

@@ -60,7 +60,12 @@ export const HomePage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-12">
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: 'easeOut' }}
+      className="space-y-12"
+    >
       {/* Hero Section with Parallax */}
       <section ref={heroRef} className="relative overflow-hidden bg-gradient-to-b from-[#07101E] to-[#081021] pt-8 pb-20 lg:pt-16 lg:pb-28">
         {/* Parallax Glow backdrop effects */}
@@ -260,6 +265,6 @@ export const HomePage: React.FC = () => {
 
       {/* Newsletter Section */}
       <NewsletterSection />
-    </div>
+    </motion.div>
   );
 };

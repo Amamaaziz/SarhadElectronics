@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { Star, ShieldCheck, Truck, RefreshCw, ShoppingCart, ArrowLeft, Check, Zap } from 'lucide-react';
 import { Product } from '../types';
 import { fetchProductByIdApi, fetchProductsApi } from '../services/api';
@@ -45,15 +46,25 @@ export const ProductDetailPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 py-20">
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: 'easeOut' }}
+        className="max-w-7xl mx-auto px-4 py-20"
+      >
         <div className="h-96 rounded-3xl bg-surface/30 animate-pulse border border-surface-border" />
-      </div>
+      </motion.div>
     );
   }
 
   if (!product) {
     return (
-      <div className="max-w-7xl mx-auto px-4 py-20 text-center space-y-4">
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: 'easeOut' }}
+        className="max-w-7xl mx-auto px-4 py-20 text-center space-y-4"
+      >
         <h2 className="text-2xl font-bold font-['Space_Grotesk'] text-white">Product Not Found</h2>
         <p className="text-textMuted text-sm">The hardware spec you requested is not listed in our active catalog.</p>
         <button
@@ -62,14 +73,19 @@ export const ProductDetailPage: React.FC = () => {
         >
           Return to Catalog
         </button>
-      </div>
+      </motion.div>
     );
   }
 
   const gallery = [product.imageUrl, ...(product.galleryUrls || [])].filter(Boolean);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-16">
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: 'easeOut' }}
+      className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-16"
+    >
       {/* Back button */}
       <button
         onClick={() => navigate(-1)}
@@ -226,6 +242,6 @@ export const ProductDetailPage: React.FC = () => {
           </div>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 };

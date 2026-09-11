@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { Search, SlidersHorizontal, ArrowUpDown, RefreshCw, X } from 'lucide-react';
 import { Product, Category } from '../types';
 import { fetchProductsApi, fetchCategoriesApi } from '../services/api';
@@ -69,7 +70,12 @@ export const ShopPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: 'easeOut' }}
+      className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8"
+    >
       {/* Header */}
       <div className="space-y-2">
         <h1 className="text-3xl sm:text-4xl font-extrabold font-['Space_Grotesk'] text-white">
@@ -219,7 +225,7 @@ export const ShopPage: React.FC = () => {
           </div>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 };
 

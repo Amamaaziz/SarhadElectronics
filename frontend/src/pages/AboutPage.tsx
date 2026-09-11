@@ -3,7 +3,12 @@ import { motion } from 'framer-motion';
 
 export const AboutPage: React.FC = () => {
   return (
-    <div className="min-h-[80vh] flex items-center justify-center py-12 lg:py-20 relative overflow-hidden bg-navy-950">
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: 'easeOut' }}
+      className="min-h-[80vh] flex items-center justify-center py-12 lg:py-20 relative overflow-hidden bg-navy-950"
+    >
       {/* Background radial blue glow */}
       <div className="absolute top-1/2 left-1/3 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] bg-gradient-to-r from-cyan-neon/10 via-blue-600/10 to-transparent rounded-full blur-3xl pointer-events-none" />
 
@@ -84,6 +89,6 @@ export const AboutPage: React.FC = () => {
           </motion.div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
