@@ -1,4 +1,4 @@
-import prisma from '../config/db';
+import { db, checkFirebaseConnection } from '../config/firebase';
 
 export interface ProductQueryOptions {
   search?: string;
@@ -9,9 +9,7 @@ export interface ProductQueryOptions {
   limit?: number;
 }
 
-// Initial products array (empty, ready for real inventory)
-export const initialProducts: any[] = [];
-
+// Initial default categories
 export const initialCategories = [
   { id: 'cat-00', name: 'All Items', slug: 'all-items' },
   { id: 'cat-01', name: 'Smart Gadgets', slug: 'smart-gadgets', description: 'Wearables, audio gears & intelligent personal gadgets' },
@@ -26,127 +24,121 @@ export let memoryOrders: any[] = [];
 export let memoryMessages: any[] = [];
 export let memorySubscribers: any[] = [];
 
-// Helper to check if DB is accessible
+// Connection checker
 export const checkDbConnection = async (): Promise<boolean> => {
-  try {
-    await prisma.$queryRaw`SELECT 1`;
-    return true;
-  } catch {
-    return false;
-  }
+  return checkFirebaseConnection();
 };
 
 export const getProductsFromStore = async (options: ProductQueryOptions) => {
-  const isDbLive = await checkDbConnection();
+  const isDbLive = await checkFirebaseConnection();
+
+  let products: any[] = [];
 
   if (isDbLive) {
-    const where: any = {};
-    if (options.search) {
-      where.OR = [
-        { name: { contains: options.search, mode: 'insensitive' } },
-        { description: { contains: options.search, mode: 'insensitive' } },
-        { brand: { contains: options.search, mode: 'insensitive' } },
-      ];
-    }
-    if (options.category && options.category !== 'all-items' && options.category !== 'All Items') {
-      where.category = {
-        OR: [
-          { slug: options.category },
-          { name: { equals: options.category, mode: 'insensitive' } }
-        ]
-      };
-    }
-    if (options.featured !== undefined) {
-      where.featured = options.featured;
-    }
+    try {
+      let query: any = db.collection('products');
+      if (options.featured !== undefined) {
+        query = query.where('featured', '==', options.featured);
+      }
 
-    let orderBy: any = { createdAt: 'desc' };
-    if (options.sort === 'price_asc') orderBy = { price: 'asc' };
-    else if (options.sort === 'price_desc') orderBy = { price: 'desc' };
-    else if (options.sort === 'rating') orderBy = { rating: 'desc' };
-    else if (options.sort === 'newest') orderBy = { createdAt: 'desc' };
-
-    const products = await prisma.product.findMany({
-      where,
-      orderBy,
-      include: { category: true },
-    });
-    return products.map((p: any) => ({
-      ...p,
-      categoryName: p.category?.name || 'Electronics',
-      categorySlug: p.category?.slug || 'electronics',
-    }));
+      const snapshot = await query.get();
+      products = snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
+    } catch (e) {
+      console.warn('⚠️ Firestore query error, falling back to in-memory:', e);
+      products = [...memoryProducts];
+    }
+  } else {
+    products = [...memoryProducts];
   }
 
-  // Memory fallback
-  let filtered = [...memoryProducts];
-
-  if (options.search) {
-    const query = options.search.toLowerCase();
-    filtered = filtered.filter(
-      (p) =>
-        p.name.toLowerCase().includes(query) ||
-        p.description.toLowerCase().includes(query) ||
-        (p.brand && p.brand.toLowerCase().includes(query))
-    );
-  }
-
+  // Filter by category
   if (options.category && options.category !== 'all-items' && options.category !== 'All Items') {
-    const cat = options.category.toLowerCase();
-    filtered = filtered.filter(
-      (p) => p.categorySlug === cat || p.categoryName.toLowerCase() === cat
+    const cat = options.category.toLowerCase().trim();
+    products = products.filter(
+      (p) =>
+        (p.categorySlug && p.categorySlug.toLowerCase() === cat) ||
+        (p.categoryName && p.categoryName.toLowerCase() === cat) ||
+        (p.categoryId && p.categoryId.toLowerCase() === cat)
     );
   }
 
-  if (options.featured !== undefined) {
-    filtered = filtered.filter((p) => p.featured === options.featured);
+  // Filter by search query
+  if (options.search) {
+    const query = options.search.toLowerCase().trim();
+    products = products.filter(
+      (p) =>
+        (p.name && p.name.toLowerCase().includes(query)) ||
+        (p.description && p.description.toLowerCase().includes(query)) ||
+        (p.brand && p.brand.toLowerCase().includes(query)) ||
+        (p.categoryName && p.categoryName.toLowerCase().includes(query))
+    );
   }
 
+  // Filter by featured if not filtered by firestore query
+  if (options.featured !== undefined && !isDbLive) {
+    products = products.filter((p) => p.featured === options.featured);
+  }
+
+  // Sort
   if (options.sort === 'price_asc') {
-    filtered.sort((a, b) => Number(a.price) - Number(b.price));
+    products.sort((a, b) => Number(a.price) - Number(b.price));
   } else if (options.sort === 'price_desc') {
-    filtered.sort((a, b) => Number(b.price) - Number(a.price));
+    products.sort((a, b) => Number(b.price) - Number(a.price));
   } else if (options.sort === 'rating') {
-    filtered.sort((a, b) => Number(b.rating) - Number(a.rating));
+    products.sort((a, b) => Number(b.rating || 0) - Number(a.rating || 0));
   } else {
     // Newest
-    filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    products.sort((a, b) => {
+      const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return timeB - timeA;
+    });
   }
 
-  return filtered;
+  return products;
 };
 
 export const getProductByIdFromStore = async (id: string) => {
-  const isDbLive = await checkDbConnection();
+  const isDbLive = await checkFirebaseConnection();
   if (isDbLive) {
-    const prod = await prisma.product.findUnique({
-      where: { id },
-      include: { category: true },
-    });
-    if (prod) {
-      return {
-        ...prod,
-        categoryName: (prod as any).category?.name || 'Electronics',
-        categorySlug: (prod as any).category?.slug || 'electronics',
-      };
+    try {
+      const doc = await db.collection('products').doc(id).get();
+      if (doc.exists) {
+        return { id: doc.id, ...doc.data() };
+      }
+
+      // Check by slug
+      const slugSnap = await db.collection('products').where('slug', '==', id).limit(1).get();
+      if (!slugSnap.empty) {
+        const sDoc = slugSnap.docs[0];
+        return { id: sDoc.id, ...sDoc.data() };
+      }
+      return null;
+    } catch {
+      // Fallback
     }
-    return null;
   }
   return memoryProducts.find((p) => p.id === id || p.slug === id) || null;
 };
 
 export const getCategoriesFromStore = async () => {
-  const isDbLive = await checkDbConnection();
+  const isDbLive = await checkFirebaseConnection();
   if (isDbLive) {
-    return prisma.category.findMany({
-      orderBy: { name: 'asc' },
-    });
+    try {
+      const snapshot = await db.collection('categories').orderBy('name', 'asc').get();
+      if (!snapshot.empty) {
+        return snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
+      }
+    } catch {
+
+      // Fallback
+    }
   }
   return memoryCategories;
 };
 
 export const createProductInStore = async (data: any) => {
-  const isDbLive = await checkDbConnection();
+  const isDbLive = await checkFirebaseConnection();
   const slug =
     data.slug ||
     data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Date.now().toString().slice(-4);
@@ -161,67 +153,69 @@ export const createProductInStore = async (data: any) => {
   const galleryUrls = data.galleryUrls || [imageUrl];
 
   if (isDbLive) {
-    // 1. Resolve or auto-create category in PostgreSQL database
+    // 1. Resolve or auto-create category in Firestore
     let category: any = null;
     if (data.categoryId) {
-      category = await prisma.category.findFirst({
-        where: {
-          OR: [
-            { id: data.categoryId },
-            { slug: data.categoryId },
-            { name: { equals: data.categoryId, mode: 'insensitive' as const } },
-            ...(data.categoryName ? [{ name: { equals: data.categoryName, mode: 'insensitive' as const } }] : []),
-          ],
-        },
-      });
+      const catDoc = await db.collection('categories').doc(data.categoryId).get();
+      if (catDoc.exists) {
+        category = { id: catDoc.id, ...catDoc.data() };
+      } else {
+        const catSnap = await db.collection('categories').where('slug', '==', data.categoryId).limit(1).get();
+        if (!catSnap.empty) {
+          category = { id: catSnap.docs[0].id, ...catSnap.docs[0].data() };
+        }
+      }
     }
 
     if (!category && data.categoryName) {
-      category = await prisma.category.findFirst({
-        where: {
-          OR: [
-            { name: { equals: data.categoryName, mode: 'insensitive' as const } },
-            { slug: data.categoryName.toLowerCase().replace(/[^a-z0-9]+/g, '-') }
-          ]
-        }
-      });
+      const catSnap = await db
+        .collection('categories')
+        .where('name', '==', data.categoryName.trim())
+        .limit(1)
+        .get();
+      if (!catSnap.empty) {
+        category = { id: catSnap.docs[0].id, ...catSnap.docs[0].data() };
+      }
     }
 
     if (!category) {
       const catName = data.categoryName || 'General Electronics';
       const catSlug = (catName.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'general') + '-' + Date.now().toString().slice(-4);
-      category = await prisma.category.create({
-        data: {
-          name: catName,
-          slug: catSlug,
-          description: `Products under ${catName}`,
-        },
-      });
+      const catRef = db.collection('categories').doc();
+      category = {
+        id: catRef.id,
+        name: catName,
+        slug: catSlug,
+        description: `Products under ${catName}`,
+        createdAt: new Date().toISOString(),
+      };
+      await catRef.set(category);
     }
 
-    const created = await prisma.product.create({
-      data: {
-        name: data.name,
-        slug,
-        description,
-        price,
-        stock,
-        categoryId: category.id,
-        brand,
-        featured,
-        imageUrl,
-        galleryUrls,
-      },
-      include: { category: true },
-    });
-
-    const formatted: any = {
-      ...created,
+    const prodRef = db.collection('products').doc();
+    const newProduct = {
+      id: prodRef.id,
+      name: data.name,
+      slug,
+      description,
+      price,
+      stock,
+      categoryId: category.id,
       categoryName: category.name,
       categorySlug: category.slug,
+      brand,
+      featured,
+      rating: 5.0,
+      reviewsCount: 0,
+      imageUrl,
+      galleryUrls,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
-    memoryProducts.unshift(formatted);
-    return formatted;
+
+    await prodRef.set(newProduct);
+    memoryProducts.unshift(newProduct);
+    return newProduct;
   }
 
   // In-memory fallback
@@ -246,15 +240,15 @@ export const createProductInStore = async (data: any) => {
     rating: 5.0,
     reviewsCount: 0,
     brand,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   };
   memoryProducts.unshift(newProduct);
   return newProduct;
 };
 
 export const updateProductInStore = async (id: string, data: any) => {
-  const isDbLive = await checkDbConnection();
+  const isDbLive = await checkFirebaseConnection();
   if (isDbLive) {
     const updateData: any = {};
     if (data.name !== undefined) updateData.name = data.name;
@@ -264,31 +258,29 @@ export const updateProductInStore = async (id: string, data: any) => {
     if (data.brand !== undefined) updateData.brand = data.brand;
     if (data.featured !== undefined) updateData.featured = Boolean(data.featured);
     if (data.imageUrl !== undefined) updateData.imageUrl = data.imageUrl;
+    if (data.galleryUrls !== undefined) updateData.galleryUrls = data.galleryUrls;
 
     if (data.categoryId) {
-      const cat = await prisma.category.findFirst({
-        where: {
-          OR: [
-            { id: data.categoryId },
-            { slug: data.categoryId },
-            { name: { equals: data.categoryId, mode: 'insensitive' as const } },
-            ...(data.categoryName ? [{ name: { equals: data.categoryName, mode: 'insensitive' as const } }] : []),
-          ],
-        },
-      });
-      if (cat) updateData.categoryId = cat.id;
+      const catDoc = await db.collection('categories').doc(data.categoryId).get();
+      if (catDoc.exists) {
+        const cat = catDoc.data()!;
+        updateData.categoryId = catDoc.id;
+        updateData.categoryName = cat.name;
+        updateData.categorySlug = cat.slug;
+      }
     }
 
-    const updated = await prisma.product.update({
-      where: { id },
-      data: updateData,
-      include: { category: true },
-    });
-    return {
-      ...updated,
-      categoryName: updated.category?.name || data.categoryName,
-      categorySlug: updated.category?.slug,
-    };
+    updateData.updatedAt = new Date().toISOString();
+
+    const prodRef = db.collection('products').doc(id);
+    const prodDoc = await prodRef.get();
+    if (!prodDoc.exists) {
+      return null;
+    }
+
+    await prodRef.update(updateData);
+    const updatedDoc = await prodRef.get();
+    return { id: updatedDoc.id, ...updatedDoc.data() };
   }
 
   const index = memoryProducts.findIndex((p) => p.id === id);
@@ -297,15 +289,16 @@ export const updateProductInStore = async (id: string, data: any) => {
   memoryProducts[index] = {
     ...memoryProducts[index],
     ...data,
-    updatedAt: new Date(),
+    updatedAt: new Date().toISOString(),
   };
   return memoryProducts[index];
 };
 
 export const deleteProductInStore = async (id: string) => {
-  const isDbLive = await checkDbConnection();
+  const isDbLive = await checkFirebaseConnection();
   if (isDbLive) {
-    return prisma.product.delete({ where: { id } });
+    await db.collection('products').doc(id).delete();
+    return true;
   }
 
   const index = memoryProducts.findIndex((p) => p.id === id);
@@ -313,4 +306,5 @@ export const deleteProductInStore = async (id: string) => {
   memoryProducts.splice(index, 1);
   return true;
 };
+
 

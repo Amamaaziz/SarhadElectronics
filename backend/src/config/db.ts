@@ -1,19 +1,6 @@
-import { PrismaClient } from '@prisma/client';
+import { db, checkFirebaseConnection } from './firebase';
 
-declare global {
-  // eslint-disable-next-line no-var
-  var prismaClientSingleton: PrismaClient | undefined;
-}
+export { db, checkFirebaseConnection };
+export default db;
 
-export const prisma =
-  globalThis.prismaClientSingleton ??
-  new PrismaClient({
-    log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
-  });
-
-if (process.env.NODE_ENV !== 'production') {
-  globalThis.prismaClientSingleton = prisma;
-}
-
-export default prisma;
 

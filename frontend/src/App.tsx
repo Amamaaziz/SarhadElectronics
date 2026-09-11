@@ -48,14 +48,9 @@ export const App: React.FC = () => {
       <ScrollToTop />
       <AuthProvider>
         <CartProvider>
-          <div className="min-h-screen flex flex-col bg-navy-950 text-white selection:bg-cyan-neon selection:text-navy-950 relative overflow-hidden cyber-grid-bg">
+          <div className="min-h-screen flex flex-col text-white selection:bg-cyan-neon selection:text-navy-950 relative overflow-hidden">
             {/* Top Glowing Scroll Progress Bar */}
             <ScrollProgress />
-
-            {/* Ambient Background Glow Lights */}
-            <div className="fixed top-0 left-1/4 w-[600px] h-[600px] bg-[#0B6CCF]/15 rounded-full blur-[150px] pointer-events-none -z-10 animate-pulse-glow" />
-            <div className="fixed bottom-0 right-1/4 w-[600px] h-[600px] bg-[#0E1E3E]/70 rounded-full blur-[150px] pointer-events-none -z-10 animate-pulse-glow [animation-delay:2s]" />
-            <div className="fixed top-1/2 right-10 w-[500px] h-[500px] bg-[#0B6CCF]/10 rounded-full blur-[180px] pointer-events-none -z-10" />
 
             <Navbar />
             <main className="flex-1 relative z-10 pt-20">

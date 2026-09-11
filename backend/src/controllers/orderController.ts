@@ -2,8 +2,8 @@ import { Response } from 'express';
 import { sendSuccess, sendError } from '../utils/apiResponse';
 import { AuthenticatedRequest } from '../middlewares/authMiddleware';
 import { verifyToken } from '../utils/jwt';
-import prisma from '../config/db';
-import { checkDbConnection, memoryOrders } from '../services/productService';
+import { db, auth, checkFirebaseConnection } from '../config/firebase';
+import { memoryOrders } from '../services/productService';
 
 export const createOrder = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
@@ -11,12 +11,21 @@ export const createOrder = async (req: AuthenticatedRequest, res: Response): Pro
 
     // Resolve user ID if authorization token was sent
     let userId = req.user?.userId;
+    let userEmail = req.user?.email;
+
     if (!userId && req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
       try {
         const token = req.headers.authorization.split(' ')[1];
         if (token && token !== 'mock-admin-token') {
-          const decoded = verifyToken(token);
-          userId = decoded.userId;
+          try {
+            const firebaseDecoded = await auth.verifyIdToken(token);
+            userId = firebaseDecoded.uid;
+            userEmail = firebaseDecoded.email;
+          } catch {
+            const decoded = verifyToken(token);
+            userId = decoded.userId;
+            userEmail = decoded.email;
+          }
         }
       } catch {
         // Fall back to guest user
@@ -28,90 +37,78 @@ export const createOrder = async (req: AuthenticatedRequest, res: Response): Pro
       return;
     }
 
-    const isDbLive = await checkDbConnection();
+    const isDbLive = await checkFirebaseConnection();
 
     if (isDbLive) {
-      // 1. Ensure a valid customer User exists in PostgreSQL
-      let finalUserId = userId;
-      if (finalUserId && finalUserId !== 'guest-user') {
-        const existingUser = await prisma.user.findUnique({ where: { id: finalUserId } });
-        if (!existingUser) finalUserId = undefined;
-      }
+      // 1. Resolve customer info
+      let customerName = 'Guest Customer';
+      let customerEmail = userEmail || `customer_${(shippingPhone || 'guest').replace(/[^0-9]/g, '') || Date.now()}@sarhadelectrics.com`;
 
-      if (!finalUserId) {
-        const phoneClean = (shippingPhone || 'guest').replace(/[^0-9]/g, '');
-        const guestEmail = `customer_${phoneClean || Date.now()}@sarhadelectrics.com`;
-
-        let customerUser = await prisma.user.findFirst({
-          where: {
-            OR: [
-              { email: guestEmail },
-              { email: 'user@sarhadelectrics.com' }
-            ]
-          }
-        });
-
-        if (!customerUser) {
-          customerUser = await prisma.user.create({
-            data: {
-              fullName: `Customer (${shippingPhone || 'Guest'})`,
-              email: guestEmail,
-              passwordHash: '$2a$10$wN9QO7z34hK4oH5bZpT0j.cRkLdC5l6nBqvWd6G6T0z0aG1aA9B1S',
-              role: 'USER',
-            }
-          });
+      if (userId && userId !== 'guest-user') {
+        const userDoc = await db.collection('users').doc(userId).get();
+        if (userDoc.exists) {
+          const uData = userDoc.data()!;
+          customerName = uData.fullName || customerName;
+          customerEmail = uData.email || customerEmail;
         }
-        finalUserId = customerUser.id;
       }
 
-      // 2. Validate product IDs in PostgreSQL
+      // 2. Validate product items and format orderItems
       const validItems: any[] = [];
       for (const item of items) {
-        let prod = await prisma.product.findFirst({
-          where: {
-            OR: [
-              { id: item.productId },
-              { name: { equals: item.name || '', mode: 'insensitive' as const } }
-            ]
+        let prodId = item.productId || item.id;
+        let prodName = item.name || item.productName || 'Electronic Item';
+        let prodPrice = Number(item.price || item.priceAtPurchase || 0);
+        let prodImg = item.imageUrl || item.image || '';
+
+        if (prodId) {
+          const pDoc = await db.collection('products').doc(prodId).get();
+          if (pDoc.exists) {
+            const pData = pDoc.data()!;
+            prodName = pData.name || prodName;
+            prodPrice = Number(pData.price || prodPrice);
+            prodImg = pData.imageUrl || prodImg;
           }
+        }
+
+        validItems.push({
+          id: `oi-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+          productId: prodId || `prod-${Date.now()}`,
+          name: prodName,
+          productName: prodName,
+          quantity: Number(item.quantity) || 1,
+          priceAtPurchase: prodPrice,
+          price: prodPrice,
+          imageUrl: prodImg,
+          product: {
+            id: prodId,
+            name: prodName,
+            price: prodPrice,
+            imageUrl: prodImg,
+          },
         });
-
-        if (!prod) {
-          // If product not found in DB, use any existing product or create placeholder
-          prod = await prisma.product.findFirst();
-        }
-
-        if (prod) {
-          validItems.push({
-            productId: prod.id,
-            quantity: Number(item.quantity) || 1,
-            priceAtPurchase: Number(item.price || prod.price),
-          });
-        }
       }
 
-      const order = await prisma.order.create({
-        data: {
-          userId: finalUserId,
-          totalAmount: Number(totalAmount),
-          shippingAddress,
-          shippingPhone: shippingPhone || '—',
-          paymentMethod: paymentMethod || 'COD',
-          status: 'PENDING',
-          orderItems: {
-            create: validItems.length > 0 ? validItems : undefined,
-          },
+      const orderRef = db.collection('orders').doc();
+      const order = {
+        id: orderRef.id,
+        userId: userId || 'guest-user',
+        totalAmount: Number(totalAmount),
+        shippingAddress,
+        shippingPhone: shippingPhone || '—',
+        paymentMethod: paymentMethod || 'COD',
+        status: 'PENDING',
+        orderItems: validItems,
+        user: {
+          id: userId || 'guest-user',
+          fullName: customerName,
+          email: customerEmail,
         },
-        include: {
-          orderItems: {
-            include: { product: true },
-          },
-          user: {
-            select: { fullName: true, email: true },
-          },
-        },
-      });
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
 
+      await orderRef.set(order);
       sendSuccess(res, order, 'Order placed successfully', 201);
       return;
     }
@@ -122,18 +119,32 @@ export const createOrder = async (req: AuthenticatedRequest, res: Response): Pro
       userId: userId || 'guest-user',
       totalAmount: Number(totalAmount),
       shippingAddress,
-      shippingPhone,
+      shippingPhone: shippingPhone || '—',
       paymentMethod: paymentMethod || 'COD',
       status: 'PENDING',
       orderItems: items.map((item: any) => ({
         id: `oi-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
-        productId: item.productId,
-        productName: item.name || 'Electronic Item',
-        quantity: item.quantity,
-        priceAtPurchase: Number(item.price),
+        productId: item.productId || item.id,
+        name: item.name || item.productName || 'Electronic Item',
+        productName: item.name || item.productName || 'Electronic Item',
+        quantity: Number(item.quantity) || 1,
+        priceAtPurchase: Number(item.price || item.priceAtPurchase || 0),
+        price: Number(item.price || item.priceAtPurchase || 0),
+        imageUrl: item.imageUrl || item.image || '',
+        product: {
+          id: item.productId || item.id,
+          name: item.name || item.productName || 'Electronic Item',
+          price: Number(item.price || item.priceAtPurchase || 0),
+          imageUrl: item.imageUrl || item.image || '',
+        },
       })),
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      user: {
+        id: userId || 'guest-user',
+        fullName: 'Demo Customer',
+        email: userEmail || 'user@sarhadelectrics.com',
+      },
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
 
     memoryOrders.unshift(newOrder);
@@ -145,22 +156,26 @@ export const createOrder = async (req: AuthenticatedRequest, res: Response): Pro
 
 export const getOrders = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const isDbLive = await checkDbConnection();
+    const isDbLive = await checkFirebaseConnection();
 
     if (isDbLive) {
-      const where = req.user?.role === 'ADMIN' ? {} : { userId: req.user?.userId };
-      const orders = await prisma.order.findMany({
-        where,
-        include: {
-          orderItems: {
-            include: { product: true },
-          },
-          user: {
-            select: { fullName: true, email: true },
-          },
-        },
-        orderBy: { createdAt: 'desc' },
+      const isAdmin = req.user?.role === 'ADMIN';
+      let query: any = db.collection('orders');
+
+      if (!isAdmin && req.user?.userId) {
+        query = query.where('userId', '==', req.user.userId);
+      }
+
+      const snapshot = await query.get();
+      let orders = snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
+
+      // Sort newest first
+      orders.sort((a: any, b: any) => {
+        const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return timeB - timeA;
       });
+
       sendSuccess(res, orders);
       return;
     }
@@ -182,13 +197,23 @@ export const updateOrderStatus = async (req: AuthenticatedRequest, res: Response
       return;
     }
 
-    const isDbLive = await checkDbConnection();
+    const isDbLive = await checkFirebaseConnection();
     if (isDbLive) {
-      const updated = await prisma.order.update({
-        where: { id },
-        data: { status },
+      const orderRef = db.collection('orders').doc(id);
+      const orderDoc = await orderRef.get();
+
+      if (!orderDoc.exists) {
+        sendError(res, 'Order not found', 404);
+        return;
+      }
+
+      await orderRef.update({
+        status,
+        updatedAt: new Date().toISOString(),
       });
-      sendSuccess(res, updated, 'Order status updated');
+
+      const updatedDoc = await orderRef.get();
+      sendSuccess(res, { id: updatedDoc.id, ...updatedDoc.data() }, 'Order status updated');
       return;
     }
 
@@ -199,10 +224,11 @@ export const updateOrderStatus = async (req: AuthenticatedRequest, res: Response
     }
 
     order.status = status;
-    order.updatedAt = new Date();
+    order.updatedAt = new Date().toISOString();
     sendSuccess(res, order, 'Order status updated');
   } catch (error: any) {
     sendError(res, 'Failed to update order status', 500, error);
   }
 };
+
 

@@ -18,62 +18,60 @@ export const BrandMarquee: React.FC<BrandMarqueeProps> = ({ children }) => {
   ];
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-[#05080F] via-[#090D1C] to-[#13162C] border-y border-white/[0.06] pt-10 pb-12 sm:pt-14 sm:pb-16">
-      {/* Background Texture: Subtle Grid + Faint Diagonal Light-Beam Glow Streak */}
+    <section className="relative overflow-hidden bg-transparent pt-10 pb-12 sm:pt-14 sm:pb-16">
+      {/* Background Texture: Subtle Grid */}
       <div className="absolute inset-0 pointer-events-none">
-        {/* Subtle grid lines */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(0,229,255,0.018)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,229,255,0.018)_1px,transparent_1px)] bg-[size:40px_40px]" />
-
-        {/* Faint diagonal light-beam / glow streak crossing the section */}
-        <div className="absolute -inset-x-32 top-0 bottom-0 bg-[linear-gradient(115deg,transparent_20%,rgba(0,229,255,0.035)_44%,rgba(59,130,246,0.06)_50%,rgba(0,229,255,0.035)_56%,transparent_75%)] opacity-90" />
-
-        {/* Ambient background soft glow spots */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[160px] bg-cyan-400/5 blur-[100px]" />
-        <div className="absolute bottom-0 right-1/4 w-[450px] h-[220px] bg-blue-600/10 blur-[110px]" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(0,229,255,0.015)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,229,255,0.015)_1px,transparent_1px)] bg-[size:40px_40px]" />
       </div>
+
+
 
       {/* Marquee Top Sub-Header */}
       <div className="relative z-10 max-w-7xl mx-auto px-4 text-center mb-6">
-        <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-white/30 font-['Space_Grotesk']">
+        <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[rgba(19,29,51,0.65)] backdrop-blur-md border border-[rgba(0,229,255,0.2)] text-[#00E5FF] text-[10px] sm:text-xs font-bold uppercase tracking-[0.25em] font-['Space_Grotesk'] shadow-[0_0_15px_rgba(0,229,255,0.1)]">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#00E5FF] animate-pulse" />
           Authorized Partner Brands & Engineering Alliances
         </span>
       </div>
 
-      {/* Top: Full-Width Horizontal Infinite Scrolling Brand Wordmarks */}
-      <div className="relative z-10 w-full overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent)] py-2">
-        <div className="flex w-max animate-marquee-continuous hover:[animation-play-state:paused]">
-          {/* Logo set 1 */}
-          <div className="flex items-center gap-14 sm:gap-20 shrink-0 pr-14 sm:pr-20">
-            {brands.map((brand, idx) => (
-              <div
-                key={`b1-${idx}`}
-                className="flex flex-col items-center justify-center group cursor-default select-none transition-transform duration-300 hover:scale-105"
-              >
-                <span className="text-xl sm:text-2xl md:text-3xl font-extrabold font-['Space_Grotesk'] tracking-[0.25em] text-white/20 uppercase transition-all duration-300 group-hover:text-white/80 group-hover:drop-shadow-[0_0_15px_rgba(0,229,255,0.6)]">
-                  {brand.name}
-                </span>
-                <span className="text-[9px] font-medium tracking-[0.22em] text-white/15 uppercase mt-0.5 group-hover:text-cyan-400/70 transition-colors">
-                  {brand.desc}
-                </span>
-              </div>
-            ))}
-          </div>
+      {/* Top: Full-Width Horizontal Infinite Scrolling Brand Wordmarks in Cyber Glass Ribbon */}
+      <div className="relative z-10 w-full bg-[rgba(19,29,51,0.55)] backdrop-blur-xl border-y border-[rgba(0,229,255,0.28)] py-6 sm:py-8 shadow-[0_0_35px_rgba(0,229,255,0.08),inset_0_1px_0_rgba(255,255,255,0.1),inset_0_-1px_0_rgba(255,255,255,0.05)] overflow-hidden">
+        {/* Inner Marquee track with soft edge mask so borders remain full length */}
+        <div className="w-full overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_5%,black_95%,transparent)]">
+          <div className="flex w-max animate-marquee-continuous hover:[animation-play-state:paused]">
+            {/* Logo set 1 */}
+            <div className="flex items-center gap-16 sm:gap-24 shrink-0 pr-16 sm:pr-24">
+              {brands.map((brand, idx) => (
+                <div
+                  key={`b1-${idx}`}
+                  className="flex flex-col items-center justify-center group cursor-pointer select-none transition-transform duration-300"
+                >
+                  <span className="text-xl sm:text-2xl md:text-3xl font-extrabold font-['Space_Grotesk'] tracking-[0.25em] text-white/85 uppercase transition-all duration-300 group-hover:text-[#00E5FF] group-hover:drop-shadow-[0_0_18px_rgba(0,229,255,0.85)] group-hover:scale-105">
+                    {brand.name}
+                  </span>
+                  <span className="text-[10px] font-semibold tracking-[0.22em] text-[#94A3B8] uppercase mt-1 group-hover:text-cyan-300 transition-colors">
+                    {brand.desc}
+                  </span>
+                </div>
+              ))}
+            </div>
 
-          {/* Logo set 2 (Identical duplicate for seamless 0-jump loop) */}
-          <div className="flex items-center gap-14 sm:gap-20 shrink-0 pr-14 sm:pr-20" aria-hidden="true">
-            {brands.map((brand, idx) => (
-              <div
-                key={`b2-${idx}`}
-                className="flex flex-col items-center justify-center group cursor-default select-none transition-transform duration-300 hover:scale-105"
-              >
-                <span className="text-xl sm:text-2xl md:text-3xl font-extrabold font-['Space_Grotesk'] tracking-[0.25em] text-white/20 uppercase transition-all duration-300 group-hover:text-white/80 group-hover:drop-shadow-[0_0_15px_rgba(0,229,255,0.6)]">
-                  {brand.name}
-                </span>
-                <span className="text-[9px] font-medium tracking-[0.22em] text-white/15 uppercase mt-0.5 group-hover:text-cyan-400/70 transition-colors">
-                  {brand.desc}
-                </span>
-              </div>
-            ))}
+            {/* Logo set 2 (Identical duplicate for seamless 0-jump loop) */}
+            <div className="flex items-center gap-16 sm:gap-24 shrink-0 pr-16 sm:pr-24" aria-hidden="true">
+              {brands.map((brand, idx) => (
+                <div
+                  key={`b2-${idx}`}
+                  className="flex flex-col items-center justify-center group cursor-pointer select-none transition-transform duration-300"
+                >
+                  <span className="text-xl sm:text-2xl md:text-3xl font-extrabold font-['Space_Grotesk'] tracking-[0.25em] text-white/85 uppercase transition-all duration-300 group-hover:text-[#00E5FF] group-hover:drop-shadow-[0_0_18px_rgba(0,229,255,0.85)] group-hover:scale-105">
+                    {brand.name}
+                  </span>
+                  <span className="text-[10px] font-semibold tracking-[0.22em] text-[#94A3B8] uppercase mt-1 group-hover:text-cyan-300 transition-colors">
+                    {brand.desc}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -82,9 +80,9 @@ export const BrandMarquee: React.FC<BrandMarqueeProps> = ({ children }) => {
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12 sm:mt-16">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
-            {/* Teal/Cyan Uppercase Label with a short horizontal line before it */}
-            <div className="flex items-center gap-2.5 text-xs font-bold uppercase tracking-[0.25em] text-cyan-400 font-['Space_Grotesk'] mb-2">
-              <span className="w-6 h-[2px] bg-cyan-400 rounded-full inline-block shrink-0 shadow-[0_0_8px_rgba(0,229,255,0.7)]" />
+            {/* Teal/Cyan Uppercase Label with a long glowing horizontal accent line before it */}
+            <div className="flex items-center gap-3 text-xs font-bold uppercase tracking-[0.25em] text-cyan-400 font-['Space_Grotesk'] mb-2">
+              <span className="w-14 sm:w-20 h-[3px] bg-gradient-to-r from-[#00E5FF] to-cyan-300 rounded-full inline-block shrink-0 shadow-[0_0_12px_rgba(0,229,255,0.85)]" />
               <span>CURATION</span>
             </div>
 

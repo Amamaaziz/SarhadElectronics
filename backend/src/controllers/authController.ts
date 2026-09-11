@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
-import prisma from '../config/db';
+import { db, checkFirebaseConnection } from '../config/firebase';
 import { hashPassword, comparePassword, generateToken } from '../utils/jwt';
 import { sendSuccess, sendError } from '../utils/apiResponse';
-import { checkDbConnection } from '../services/productService';
+
 import { AuthenticatedRequest } from '../middlewares/authMiddleware';
 
 // In-memory mock users fallback if DB not connected yet
@@ -10,8 +10,8 @@ const memoryUsers = [
   {
     id: 'user-admin-01',
     fullName: 'Sarhad Admin',
-    email: 'admin@sarhadelectrics.com',
-    passwordHash: '$2a$10$wN9QO7z34hK4oH5bZpT0j.cRkLdC5l6nBqvWd6G6T0z0aG1aA9B1S', // 'Admin123!'
+    email: 'khankhansarmad9@gmail.com',
+    passwordHash: '$2a$10$ZgS1oYYnFK7oHKeNI6OfBOcm5HgqAVQHOQgVbLVKzAsKk0KuLeyv6', // 'Pakistan123@'
     role: 'ADMIN' as const,
     createdAt: new Date(),
   },
@@ -19,7 +19,7 @@ const memoryUsers = [
     id: 'user-demo-01',
     fullName: 'Demo Customer',
     email: 'user@sarhadelectrics.com',
-    passwordHash: '$2a$10$wN9QO7z34hK4oH5bZpT0j.cRkLdC5l6nBqvWd6G6T0z0aG1aA9B1S', // 'Admin123!'
+    passwordHash: '$2a$10$wN9QO7z34hK4oH5bZpT0j.cRkLdC5l6nBqvWd6G6T0z0aG1aA9B1S',
     role: 'USER' as const,
     createdAt: new Date(),
   }
@@ -45,42 +45,49 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     }
 
     const emailNormalized = email.toLowerCase().trim();
-    const isDbLive = await checkDbConnection();
+    const isDbLive = await checkFirebaseConnection();
 
     if (isDbLive) {
-      const existingUser = await prisma.user.findUnique({
-        where: { email: emailNormalized },
-      });
+      const existingSnapshot = await db
+        .collection('users')
+        .where('email', '==', emailNormalized)
+        .limit(1)
+        .get();
 
-      if (existingUser) {
+      if (!existingSnapshot.empty) {
         sendError(res, 'An account with this email address already exists', 400);
         return;
       }
 
       const passwordHash = await hashPassword(password);
-      const user = await prisma.user.create({
-        data: {
-          fullName,
-          email: emailNormalized,
-          passwordHash,
-          role: 'USER',
-        },
-      });
+      const userRef = db.collection('users').doc();
+      const newUser = {
+        id: userRef.id,
+        fullName,
+        email: emailNormalized,
+        passwordHash,
+        role: 'USER' as const,
+        avatarUrl: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      await userRef.set(newUser);
 
       const token = generateToken({
-        userId: user.id,
-        email: user.email,
-        role: user.role,
+        userId: newUser.id,
+        email: newUser.email,
+        role: newUser.role,
       });
 
       sendSuccess(
         res,
         {
           user: {
-            id: user.id,
-            fullName: user.fullName,
-            email: user.email,
-            role: user.role,
+            id: newUser.id,
+            fullName: newUser.fullName,
+            email: newUser.email,
+            role: newUser.role,
           },
           token,
         },
@@ -143,31 +150,38 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     }
 
     const emailNormalized = email.toLowerCase().trim();
-    const isDbLive = await checkDbConnection();
+    const isDbLive = await checkFirebaseConnection();
 
     let user: any = null;
 
     if (isDbLive) {
-      user = await prisma.user.findUnique({
-        where: { email: emailNormalized },
-      });
+      const snapshot = await db
+        .collection('users')
+        .where('email', '==', emailNormalized)
+        .limit(1)
+        .get();
+
+      if (!snapshot.empty) {
+        const doc = snapshot.docs[0];
+        user = { id: doc.id, ...doc.data() };
+      }
     } else {
       user = memoryUsers.find((u) => u.email === emailNormalized);
     }
 
     if (!user) {
       // Convenience demo login fallback: if admin/demo credentials are used
-      if (emailNormalized === 'admin@sarhadelectrics.com' && (password === 'admin123' || password === 'Admin123!')) {
+      if (emailNormalized === 'khankhansarmad9@gmail.com' && password === 'Pakistan123@') {
         const token = generateToken({
           userId: 'user-admin-01',
-          email: 'admin@sarhadelectrics.com',
+          email: 'khankhansarmad9@gmail.com',
           role: 'ADMIN',
         });
         sendSuccess(res, {
           user: {
             id: 'user-admin-01',
             fullName: 'Sarhad Admin',
-            email: 'admin@sarhadelectrics.com',
+            email: 'khankhansarmad9@gmail.com',
             role: 'ADMIN',
           },
           token,
@@ -183,8 +197,8 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     let isMatch = await comparePassword(password, user.passwordHash);
     if (
       !isMatch &&
-      (user.role === 'ADMIN' || emailNormalized.includes('admin')) &&
-      (password === 'admin123' || password === 'Admin123!' || password === 'Admin@12345' || password === 'admin')
+      (user.role === 'ADMIN' || emailNormalized === 'khankhansarmad9@gmail.com') &&
+      password === 'Pakistan123@'
     ) {
       isMatch = true;
     }
@@ -225,31 +239,47 @@ export const getMe = async (req: AuthenticatedRequest, res: Response): Promise<v
       return;
     }
 
-    const isDbLive = await checkDbConnection();
+    const isDbLive = await checkFirebaseConnection();
     if (isDbLive) {
-      const user = await prisma.user.findUnique({
-        where: { id: req.user.userId },
-        select: {
-          id: true,
-          fullName: true,
-          email: true,
-          role: true,
-          avatarUrl: true,
-          createdAt: true,
-        },
-      });
+      const userDoc = await db.collection('users').doc(req.user.userId).get();
 
-      if (!user) {
-        sendError(res, 'User not found', 404);
+      if (userDoc.exists) {
+        const data = userDoc.data()!;
+        sendSuccess(res, {
+          id: userDoc.id,
+          fullName: data.fullName,
+          email: data.email,
+          role: data.role,
+          avatarUrl: data.avatarUrl || null,
+          createdAt: data.createdAt,
+        });
         return;
       }
 
-      sendSuccess(res, user);
-      return;
+      // Check by email query if UID was from Auth or not matching doc ID
+      const snapshot = await db
+        .collection('users')
+        .where('email', '==', req.user.email.toLowerCase().trim())
+        .limit(1)
+        .get();
+
+      if (!snapshot.empty) {
+        const doc = snapshot.docs[0];
+        const data = doc.data();
+        sendSuccess(res, {
+          id: doc.id,
+          fullName: data.fullName,
+          email: data.email,
+          role: data.role,
+          avatarUrl: data.avatarUrl || null,
+          createdAt: data.createdAt,
+        });
+        return;
+      }
     }
 
     // Memory fallback
-    const user = memoryUsers.find((u) => u.id === req.user?.userId) || {
+    const user = memoryUsers.find((u) => u.id === req.user?.userId || u.email === req.user?.email) || {
       id: req.user.userId,
       fullName: req.user.email.split('@')[0],
       email: req.user.email,
@@ -262,4 +292,5 @@ export const getMe = async (req: AuthenticatedRequest, res: Response): Promise<v
     sendError(res, 'Failed to fetch user profile', 500, error);
   }
 };
+
 

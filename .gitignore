@@ -11,3 +11,7 @@ build/
 status_output.txt
 .DS_Store
 Thumbs.db
+serviceAccountKey.json
+*serviceAccountKey*.json
+service-account*.json
+

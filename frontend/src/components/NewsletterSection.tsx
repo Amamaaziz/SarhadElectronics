@@ -26,21 +26,17 @@ export const NewsletterSection: React.FC = () => {
 
   return (
     <section className="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-      {/* Exact Right-Side Electric Blue Radiant Glow from Reference Screenshot 2 */}
-      <div className="absolute right-0 top-1/2 -translate-y-1/2 w-[650px] h-[450px] bg-gradient-to-l from-[#0B6CCF]/65 via-[#0B6CCF]/30 to-transparent rounded-full blur-[100px] pointer-events-none -z-10" />
-      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[400px] h-[300px] bg-[#040813]/80 rounded-full blur-3xl pointer-events-none -z-10" />
-
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: '-40px' }}
         transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] as const }}
-        className="relative rounded-3xl bg-gradient-to-r from-[#07101E]/90 via-[#091B3A]/75 to-[#0B3970]/55 backdrop-blur-2xl border border-cyan-neon/35 p-8 sm:p-12 lg:p-14 text-center overflow-hidden shadow-[0_0_45px_rgba(11,108,207,0.22)]"
+        className="relative rounded-[28px] bg-[rgba(255,255,255,0.05)] backdrop-blur-[20px] border border-[rgba(255,255,255,0.08)] p-8 sm:p-12 lg:p-14 text-center overflow-hidden shadow-2xl"
       >
-        {/* Top-Left STAY UPDATED Label matching reference screenshot */}
+        {/* Top-Left STAY UPDATED Label */}
         <div className="absolute top-6 left-6 sm:top-8 sm:left-10 flex items-center gap-2.5">
-          <span className="w-5 h-[2px] bg-cyan-neon rounded-full" />
-          <span className="text-[11px] sm:text-xs font-extrabold uppercase tracking-widest text-cyan-neon font-['Space_Grotesk']">
+          <span className="w-5 h-[2px] bg-[#00E5FF] rounded-full" />
+          <span className="text-[11px] sm:text-xs font-extrabold uppercase tracking-widest text-[#00E5FF] font-['Space_Grotesk']">
             STAY UPDATED
           </span>
         </div>
@@ -55,9 +51,9 @@ export const NewsletterSection: React.FC = () => {
             Subscribe to our newsletter for exclusive tech drops, project updates, and member-only discounts.
           </p>
 
-          {/* Unified Input and Subscribe Pill Bar */}
+          {/* Unified Input and Subscribe Bar */}
           <form onSubmit={handleSubmit} className="pt-6 max-w-2xl mx-auto">
-            <div className="flex flex-col sm:flex-row items-center gap-2.5 p-2 rounded-2xl bg-[#09152b]/85 border border-[#0B6CCF]/30 backdrop-blur-md shadow-inner">
+            <div className="flex flex-col sm:flex-row items-center gap-2.5 p-2 rounded-2xl bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.1)] backdrop-blur-md">
               <div className="relative flex-1 w-full">
                 <input
                   type="email"
@@ -65,7 +61,7 @@ export const NewsletterSection: React.FC = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email"
-                  className="w-full px-4 py-3 rounded-xl bg-[#060D1E]/70 border border-[#0B6CCF]/25 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-neon focus:ring-1 focus:ring-cyan-neon transition-all"
+                  className="w-full px-4 py-3 rounded-xl bg-[rgba(7,16,30,0.6)] border border-[rgba(255,255,255,0.12)] text-sm text-white placeholder:text-slate-400 focus:outline-none focus:border-[#00E5FF] focus:ring-1 focus:ring-[#00E5FF] transition-all"
                 />
               </div>
               <motion.button
@@ -73,7 +69,7 @@ export const NewsletterSection: React.FC = () => {
                 whileTap={{ scale: 0.97 }}
                 type="submit"
                 disabled={status === 'loading'}
-                className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-[#0B6CCF] hover:bg-cyan-neon hover:text-navy-950 text-white font-extrabold text-xs sm:text-sm tracking-wider uppercase font-['Space_Grotesk'] shadow-neon-blue hover:shadow-neon-cyan transition-all shrink-0 disabled:opacity-50 btn-shine"
+                className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-[#0B6CCF] hover:bg-[#00E5FF] hover:text-[#07101E] text-white font-extrabold text-xs sm:text-sm tracking-wider uppercase font-['Space_Grotesk'] shadow-neon-blue hover:shadow-neon-cyan transition-all shrink-0 disabled:opacity-50 btn-shine"
               >
                 {status === 'loading' ? 'SUBSCRIBING...' : 'SUBSCRIBE'}
               </motion.button>
@@ -106,4 +102,5 @@ export const NewsletterSection: React.FC = () => {
 };
 
 export default NewsletterSection;
+
 

@@ -7,14 +7,14 @@ async function main() {
   console.log('🌱 Starting database seed for Sarhad Electrics...');
 
   // 1. Seed Admin & Demo Customer
-  const passwordHash = await bcrypt.hash('Admin123!', 10);
+  const passwordHash = await bcrypt.hash('Pakistan123@', 10);
 
   const admin = await prisma.user.upsert({
-    where: { email: 'admin@sarhadelectrics.com' },
+    where: { email: 'khankhansarmad9@gmail.com' },
     update: {},
     create: {
       fullName: 'Sarhad Admin',
-      email: 'admin@sarhadelectrics.com',
+      email: 'khankhansarmad9@gmail.com',
       passwordHash,
       role: 'ADMIN',
     },

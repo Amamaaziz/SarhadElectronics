@@ -29,8 +29,11 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       return { success: false, message: 'Admin role verification failed' };
     } catch {
       // Offline / dev fallback admin login
-      if (email.includes('admin') || password === 'admin123') {
-        const user = { email, fullName: 'Sarhad Administrator' };
+      if (
+        (email.toLowerCase() === 'khankhansarmad9@gmail.com' && password === 'Pakistan123@') ||
+        email.includes('admin')
+      ) {
+        const user = { email: 'khankhansarmad9@gmail.com', fullName: 'Sarhad Administrator' };
         setAdminUser(user);
         localStorage.setItem('sarhad_admin_token', 'mock-admin-token');
         localStorage.setItem('sarhad_admin_user', JSON.stringify(user));

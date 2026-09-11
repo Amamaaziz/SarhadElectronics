@@ -67,14 +67,9 @@ export const HomePage: React.FC = () => {
       className="space-y-12"
     >
       {/* Hero Section with Parallax */}
-      <section ref={heroRef} className="relative overflow-hidden bg-gradient-to-b from-[#07101E] to-[#081021] pt-8 pb-20 lg:pt-16 lg:pb-28">
-        {/* Parallax Glow backdrop effects */}
-        <motion.div
-          style={{ y: heroGlowY, opacity: heroGlowOpacity }}
-          className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[750px] h-[750px] bg-hero-glow rounded-full blur-3xl pointer-events-none animate-pulse-glow"
-        />
-
+      <section ref={heroRef} className="relative overflow-hidden bg-transparent pt-8 pb-20 lg:pt-16 lg:pb-28">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+
           <motion.div style={{ y: heroContentY }} className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             {/* Left Headline Block */}
             <motion.div

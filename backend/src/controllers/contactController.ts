@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { sendSuccess, sendError } from '../utils/apiResponse';
-import prisma from '../config/db';
-import { checkDbConnection, memoryMessages } from '../services/productService';
+import { db, checkFirebaseConnection } from '../config/firebase';
+import { memoryMessages } from '../services/productService';
 
 export const submitContactMessage = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -12,18 +12,21 @@ export const submitContactMessage = async (req: Request, res: Response): Promise
       return;
     }
 
-    const isDbLive = await checkDbConnection();
+    const isDbLive = await checkFirebaseConnection();
 
     if (isDbLive) {
-      const contact = await prisma.contactMessage.create({
-        data: {
-          fullName,
-          email,
-          subject,
-          message,
-          status: 'UNREAD',
-        },
-      });
+      const msgRef = db.collection('contact_messages').doc();
+      const contact = {
+        id: msgRef.id,
+        fullName,
+        email,
+        subject,
+        message,
+        status: 'UNREAD' as const,
+        createdAt: new Date().toISOString(),
+      };
+
+      await msgRef.set(contact);
       sendSuccess(res, contact, 'Message sent successfully! We will get back to you shortly.', 201);
       return;
     }
@@ -35,8 +38,8 @@ export const submitContactMessage = async (req: Request, res: Response): Promise
       email,
       subject,
       message,
-      status: 'UNREAD',
-      createdAt: new Date(),
+      status: 'UNREAD' as const,
+      createdAt: new Date().toISOString(),
     };
     memoryMessages.unshift(newMsg);
 
@@ -48,19 +51,20 @@ export const submitContactMessage = async (req: Request, res: Response): Promise
 
 export const getContactMessages = async (req: Request, res: Response): Promise<void> => {
   try {
-    const isDbLive = await checkDbConnection();
+    const isDbLive = await checkFirebaseConnection();
 
     if (isDbLive) {
-      const messages = await prisma.contactMessage.findMany({
-        orderBy: { createdAt: 'desc' },
-      });
+      const snapshot = await db.collection('contact_messages').orderBy('createdAt', 'desc').get();
+      const messages = snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
       sendSuccess(res, messages);
       return;
     }
+
 
     sendSuccess(res, memoryMessages);
   } catch (error: any) {
     sendError(res, 'Failed to retrieve messages', 500, error);
   }
 };
+
 

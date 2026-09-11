@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { sendSuccess, sendError } from '../utils/apiResponse';
-import prisma from '../config/db';
-import { checkDbConnection, memorySubscribers } from '../services/productService';
+import { db, checkFirebaseConnection } from '../config/firebase';
+import { memorySubscribers } from '../services/productService';
 
 export const subscribe = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -13,22 +13,29 @@ export const subscribe = async (req: Request, res: Response): Promise<void> => {
     }
 
     const emailNormalized = email.toLowerCase().trim();
-    const isDbLive = await checkDbConnection();
+    const isDbLive = await checkFirebaseConnection();
 
     if (isDbLive) {
-      const existing = await prisma.subscriber.findUnique({
-        where: { email: emailNormalized },
-      });
+      const existingSnap = await db
+        .collection('subscribers')
+        .where('email', '==', emailNormalized)
+        .limit(1)
+        .get();
 
-      if (existing) {
+      if (!existingSnap.empty) {
+        const existing = { id: existingSnap.docs[0].id, ...existingSnap.docs[0].data() };
         sendSuccess(res, existing, 'You are already subscribed to our newsletter!');
         return;
       }
 
-      const subscriber = await prisma.subscriber.create({
-        data: { email: emailNormalized },
-      });
+      const subRef = db.collection('subscribers').doc();
+      const subscriber = {
+        id: subRef.id,
+        email: emailNormalized,
+        subscribedAt: new Date().toISOString(),
+      };
 
+      await subRef.set(subscriber);
       sendSuccess(res, subscriber, 'Successfully subscribed to Sarhad Electrics newsletter!', 201);
       return;
     }
@@ -42,7 +49,7 @@ export const subscribe = async (req: Request, res: Response): Promise<void> => {
     const subscriber = {
       id: `sub-${Date.now()}`,
       email: emailNormalized,
-      subscribedAt: new Date(),
+      subscribedAt: new Date().toISOString(),
     };
     memorySubscribers.push(subscriber);
 
@@ -54,19 +61,20 @@ export const subscribe = async (req: Request, res: Response): Promise<void> => {
 
 export const getSubscribers = async (req: Request, res: Response): Promise<void> => {
   try {
-    const isDbLive = await checkDbConnection();
+    const isDbLive = await checkFirebaseConnection();
 
     if (isDbLive) {
-      const subscribers = await prisma.subscriber.findMany({
-        orderBy: { subscribedAt: 'desc' },
-      });
+      const snapshot = await db.collection('subscribers').orderBy('subscribedAt', 'desc').get();
+      const subscribers = snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
       sendSuccess(res, subscribers);
       return;
     }
+
 
     sendSuccess(res, memorySubscribers);
   } catch (error: any) {
     sendError(res, 'Failed to fetch subscribers', 500, error);
   }
 };
+
 

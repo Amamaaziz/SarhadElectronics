@@ -80,7 +80,7 @@ npm install
 npm run dev
 ```
 *Admin Dashboard URL:* `http://localhost:5174`
-*Default Admin Credentials:* `admin@sarhadelectrics.com` / `admin123`
+*Default Admin Credentials:* `khankhansarmad9@gmail.com` / `Pakistan123@`
 
 ---
 

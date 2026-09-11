@@ -53,12 +53,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { success: false, message: res.data?.message || 'Login failed' };
     } catch (err: any) {
       // Dev mock login fallback
-      if (email.toLowerCase() === 'user@sarhadelectrics.com' || email.toLowerCase() === 'admin@sarhadelectrics.com') {
+      if (email.toLowerCase() === 'user@sarhadelectrics.com' || email.toLowerCase() === 'khankhansarmad9@gmail.com') {
         const mockUser: User = {
           id: 'dev-user-01',
           fullName: email.split('@')[0],
           email,
-          role: email.includes('admin') ? 'ADMIN' : 'USER',
+          role: email.toLowerCase() === 'khankhansarmad9@gmail.com' ? 'ADMIN' : 'USER',
         };
         setUser(mockUser);
         setToken('dev-mock-jwt-token');
