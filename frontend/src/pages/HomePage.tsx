@@ -92,7 +92,7 @@ export const HomePage: React.FC = () => {
 
               <motion.h1
                 variants={itemVariants}
-                className="text-4xl sm:text-6xl md:text-7xl lg:text-[85px] xl:text-[100px] 2xl:text-[108px] font-[800] font-['Space_Grotesk'] tracking-[-0.035em] text-white leading-[1.06]"
+                className="text-3xl sm:text-5xl lg:text-[64px] xl:text-[70px] 2xl:text-[72px] font-[800] font-['Space_Grotesk'] tracking-[-0.03em] text-white leading-[1.08]"
               >
                 Power Your Future With{' '}
                 <span className="text-transparent bg-clip-text bg-[linear-gradient(90deg,#FFFFFF_0%,#00E5FF_50%,#A855F7_100%)]">
